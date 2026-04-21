@@ -4,7 +4,13 @@ import { scenarios } from './catalog'
 
 export * from './types'
 
-export const scenarioIds: ScenarioId[] = ['thermal-incident', 'heat-inlet-breach', 'air-quality-co2']
+export const scenarioIds: ScenarioId[] = [
+  'thermal-incident',
+  'heat-inlet-breach',
+  'air-quality-co2',
+  'dormitory-flood',
+  'lab-access-breach',
+]
 
 const routeAliases: Record<string, ScenarioId> = {
   'hospital-fire': 'thermal-incident',

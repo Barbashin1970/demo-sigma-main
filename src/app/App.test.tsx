@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it } from 'vitest'
 
 import { playbackStore } from '../features/scenario-player/runtime'
+import { scenarios } from '../scenarios'
 import App from './App'
 
 describe('App routes', () => {
@@ -28,9 +29,11 @@ describe('App routes', () => {
     expect(screen.getAllByTestId('decision-summary').at(-1)).toBeInTheDocument()
     expect(screen.getAllByTestId('forecast-summary').at(-1)).toBeInTheDocument()
     expect(screen.queryByText(/смартфонный пульт руководителя/i)).not.toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /опасность пожара/i })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /прорыв теплового ввода/i })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /качество воздуха/i })).toBeInTheDocument()
+    for (const scenario of Object.values(scenarios)) {
+      expect(
+        screen.getByRole('button', { name: new RegExp(scenario.tabLabel, 'i') }),
+      ).toBeInTheDocument()
+    }
     expect(screen.queryByRole('button', { name: /^термический инцидент$/i })).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /запуск/i })).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /пауза/i })).not.toBeInTheDocument()
@@ -40,6 +43,19 @@ describe('App routes', () => {
     expect(screen.queryByText(/действия оператора/i)).not.toBeInTheDocument()
     expect(screen.queryByText(/^сценарии$/i)).not.toBeInTheDocument()
     expect(screen.queryByText(/ход сценария/i)).not.toBeInTheDocument()
+  })
+
+  it('renders every catalog scenario as a heading when visiting its route', async () => {
+    for (const scenario of Object.values(scenarios)) {
+      window.history.pushState({}, '', `/operator/${scenario.id}`)
+      const { unmount } = render(<App />)
+
+      expect(
+        screen.getAllByRole('heading', { name: new RegExp(scenario.headline, 'i') }).length,
+      ).toBeGreaterThan(0)
+
+      unmount()
+    }
   })
 
   it('resets event feed and progress when switching scenario tabs', async () => {

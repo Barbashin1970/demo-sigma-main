@@ -1,4 +1,9 @@
-export type ScenarioId = 'thermal-incident' | 'heat-inlet-breach' | 'air-quality-co2'
+export type ScenarioId =
+  | 'thermal-incident'
+  | 'heat-inlet-breach'
+  | 'air-quality-co2'
+  | 'dormitory-flood'
+  | 'lab-access-breach'
 export type ZoneId = 'zone-a' | 'zone-b' | 'zone-c'
 export type Criticality = 'normal' | 'watch' | 'elevated' | 'high' | 'critical'
 export type RunMode = 'manual' | 'auto'
@@ -6,13 +11,27 @@ export type PlaybackStatus = 'idle' | 'running' | 'paused' | 'completed'
 export type TimelineEventType = 'signal' | 'event' | 'decision' | 'action' | 'forecast'
 export type DisplayMode = 'operator' | 'display'
 export type StoryboardSceneKind = 'baseline' | 'signal' | 'decision' | 'action' | 'outcome'
-export type SourceKind = 'sensor' | 'external' | 'manual' | 'virtual' | 'actuator'
-export type RiskKind = 'thermal' | 'water' | 'air'
+export type SourceKind = 'sensor' | 'external' | 'manual' | 'virtual' | 'actuator' | 'video-analytic'
+export type RiskKind = 'thermal' | 'water' | 'air' | 'security'
 export type IncidentOrigin = 'internal' | 'external' | 'hybrid'
 export type TaskStatus = 'pending' | 'in-progress' | 'done'
 export type ValveState = 'idle' | 'standby' | 'closing' | 'closed'
 export type LightState = 'normal' | 'watch' | 'alert'
 export type ActivePanel = 'city' | 'object' | 'tasks' | 'forecast'
+export type ZoneIconKey =
+  | 'server-rack'
+  | 'electrical-panel'
+  | 'access-corridor'
+  | 'intensive-care'
+  | 'tech-corridor'
+  | 'heat-node'
+  | 'forest-edge'
+  | 'pedestrian-route'
+  | 'forest-entrance'
+  | 'residential-floor'
+  | 'leak-collector'
+  | 'laboratory'
+  | 'perimeter-gate'
 
 export interface RecommendationItem {
   id: string
@@ -88,6 +107,7 @@ export interface ScenarioZone {
   sensorLine: string
   operatorNote: string
   sourceIds: string[]
+  icon: ZoneIconKey
 }
 
 export interface TaskItem {
@@ -213,4 +233,11 @@ export interface ScenarioDefinition {
   sources: SignalSource[]
   smartphoneActions: SmartphoneAction[]
   steps: ScenarioStep[]
+}
+
+export type FocusPanel = 'city' | 'object' | 'incident' | 'tasks' | 'forecast' | null
+
+export interface FocusDescriptor {
+  panel: FocusPanel
+  accent: Criticality | null
 }

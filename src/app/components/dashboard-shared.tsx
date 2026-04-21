@@ -1,7 +1,9 @@
 import clsx from 'clsx'
 import { useState, type HTMLAttributes, type ReactNode } from 'react'
 
-import type { ActivePanel } from '../../scenarios'
+import type { ActivePanel, Criticality } from '../../scenarios'
+
+import { criticalityAccentBorder } from './icons'
 
 const panelFocusClass = {
   city: 'border-zinc-950 shadow-[0_0_0_1px_rgba(24,24,27,0.18)]',
@@ -11,18 +13,22 @@ const panelFocusClass = {
 } as const
 
 export const Surface = ({
+  accent,
   className,
   children,
   ...props
 }: {
+  accent?: Criticality | null
   className?: string
   children: ReactNode
 } & HTMLAttributes<HTMLElement>) => (
   <section
     className={clsx(
       'rounded-[2rem] border border-white/60 bg-white/78 p-5 shadow-[0_22px_56px_-34px_rgba(15,23,42,0.28)] backdrop-blur-xl md:p-6',
+      accent ? clsx('border-l-4', criticalityAccentBorder[accent]) : undefined,
       className,
     )}
+    data-accent={accent ?? undefined}
     {...props}
   >
     {children}
@@ -32,16 +38,19 @@ export const Surface = ({
 export const PanelSurface = ({
   active,
   panel,
+  accent,
   className,
   children,
   ...props
 }: {
   active: ActivePanel | null
   panel?: ActivePanel
+  accent?: Criticality | null
   className?: string
   children: ReactNode
 } & HTMLAttributes<HTMLElement>) => (
   <Surface
+    accent={accent}
     className={clsx(panel && active === panel ? panelFocusClass[panel] : undefined, className)}
     data-active={panel && active === panel ? 'true' : 'false'}
     {...props}
