@@ -11,6 +11,7 @@ import {
   ShellBackground,
 } from './dashboard-sections'
 import { ScenarioLauncher } from './scenario-launcher'
+import { SigmaAssist } from './sigma-assist'
 
 const LeaderDashboard = ({
   state,
@@ -31,23 +32,21 @@ const LeaderDashboard = ({
     <div className="relative min-h-[100dvh] overflow-hidden bg-[#f3f0e8] text-zinc-950">
       <ShellBackground />
       <div className="relative mx-auto max-w-[1680px] px-4 py-5 md:px-6 lg:px-8" data-testid="operator-shell">
-        <div className="grid gap-5 xl:grid-cols-[340px_minmax(0,1fr)]">
-          <ControlRail
-            interactive={interactive}
-            onOpenLauncher={interactive ? () => setLauncherOpen(true) : undefined}
-            onReset={onReset}
-            onStep={onStep}
-            state={state}
-          />
-
-          <div className="space-y-5">
-            <ScenarioHeader interactive={interactive} state={state} />
-            <div className="grid gap-5 xl:grid-cols-[minmax(0,1.08fr)_minmax(0,0.92fr)]">
-              <IncidentPanel state={state} />
-              <ForecastPanel state={state} />
-            </div>
+        <div className="space-y-5">
+          <ScenarioHeader interactive={interactive} state={state} />
+          <div className="grid gap-5 xl:grid-cols-[280px_minmax(0,1.1fr)_minmax(0,1fr)]">
+            <ControlRail state={state} />
+            <IncidentPanel state={state} />
+            <ForecastPanel state={state} />
           </div>
         </div>
+        <SigmaAssist
+          interactive={interactive}
+          onOpenLauncher={interactive ? () => setLauncherOpen(true) : undefined}
+          onReset={onReset}
+          onStep={onStep}
+          state={state}
+        />
       </div>
       <ScenarioLauncher
         currentMode={mode}

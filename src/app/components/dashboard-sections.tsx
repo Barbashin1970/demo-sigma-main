@@ -1,14 +1,15 @@
 import {
-  ArrowClockwise,
   Buildings,
   ChartLineUp,
-  GridFour,
+  CheckCircle,
   Monitor,
+  Prohibit,
   ShieldCheck,
-  Steps,
+  TrendDown,
+  TrendUp,
+  Warning,
 } from '@phosphor-icons/react'
 import clsx from 'clsx'
-import type { ReactNode } from 'react'
 
 import type {
   Criticality,
@@ -25,7 +26,6 @@ import {
   Eyebrow,
   MetricTile,
   PanelSurface,
-  ScenarioProgress,
   StageCard,
   Surface,
 } from './dashboard-shared'
@@ -132,6 +132,88 @@ const riskChipIcon = (riskKind: RiskKind) => (
   <IconGlyph of={riskIcon[riskKind]} size={16} weight="duotone" />
 )
 
+const statusBannerCopy: Record<
+  Criticality,
+  { title: string; subtitle: string; bg: string; border: string; accent: string; iconText: string; iconBg: string }
+> = {
+  normal: {
+    title: 'Система в норме',
+    subtitle: 'Все ключевые сигналы в пределах регламента',
+    bg: 'bg-emerald-50/85',
+    border: 'border-emerald-200/90',
+    accent: 'text-emerald-800',
+    iconText: 'text-emerald-600',
+    iconBg: 'bg-white',
+  },
+  watch: {
+    title: 'Наблюдение',
+    subtitle: 'Есть одиночный сигнал — ситуация под контролем',
+    bg: 'bg-amber-50/85',
+    border: 'border-amber-200/90',
+    accent: 'text-amber-800',
+    iconText: 'text-amber-600',
+    iconBg: 'bg-white',
+  },
+  elevated: {
+    title: 'Повышенная готовность',
+    subtitle: 'Два и более сигнала — нужны действия смежных служб',
+    bg: 'bg-orange-50/90',
+    border: 'border-orange-300/90',
+    accent: 'text-orange-800',
+    iconText: 'text-orange-600',
+    iconBg: 'bg-white',
+  },
+  high: {
+    title: 'Высокий риск',
+    subtitle: 'Инцидент подтверждён — нужно решение руководителя',
+    bg: 'bg-red-50/90',
+    border: 'border-red-300/90',
+    accent: 'text-red-800',
+    iconText: 'text-red-600',
+    iconBg: 'bg-white',
+  },
+  critical: {
+    title: 'Активный инцидент',
+    subtitle: 'Эскалация подтверждена — работает несколько служб',
+    bg: 'bg-red-100/95',
+    border: 'border-red-400/95',
+    accent: 'text-red-900',
+    iconText: 'text-red-700',
+    iconBg: 'bg-white',
+  },
+}
+
+const criticalityRowTint: Record<Criticality, string> = {
+  normal: 'bg-emerald-50/55',
+  watch: 'bg-amber-50/70',
+  elevated: 'bg-orange-50/75',
+  high: 'bg-red-50/75',
+  critical: 'bg-red-100/80',
+}
+
+const doNotByRisk: Record<RiskKind, string[]> = {
+  thermal: [
+    'Не открывать двери в горящее помещение без защиты — приток воздуха усиливает пламя',
+    'Не отключать питание серверной до подтверждения старшего ИТ-инженера',
+  ],
+  water: [
+    'Не закрывать стояк автоматически без подтверждения обходчика',
+    'Не допускать персонал в затопленную зону до проверки СКУД и электрики',
+  ],
+  air: [
+    'Не выпускать пешеходов на маршруты без подтверждения двух источников',
+    'Не запускать приточную вентиляцию до проверки фильтров и направления ветра',
+  ],
+  security: [
+    'Не применять силу до прибытия группы быстрого реагирования',
+    'Не отменять удержание замка без старшего по безопасности кампуса',
+  ],
+  operational: [
+    'Не переводить службу в режим ЧС без распоряжения главы поселка',
+    'Не эскалировать на город до подтверждения вторым независимым источником',
+  ],
+}
+
 const presentText = (value: string) =>
   value
     .replaceAll('IAQ-мониторинг', 'контроль качества воздуха')
@@ -180,131 +262,22 @@ const presentText = (value: string) =>
     .replaceAll('сценарий', 'ситуация')
     .replaceAll('  ', ' ')
 
-const StatusPill = ({
-  criticality,
-  status,
-}: {
-  criticality: Criticality
-  status: PlaybackStatus
-}) => (
-  <div
-    aria-label={`Критичность: ${criticalityLabel[criticality]}`}
-    className="inline-flex items-center gap-3 rounded-full border border-zinc-200/90 bg-white/90 px-4 py-3 text-sm"
-    role="status"
-  >
-    <span className={clsx('inline-flex h-6 w-6 items-center justify-center rounded-full', criticalityText[criticality])}>
-      <IconGlyph of={criticalityIcon[criticality]} size={18} weight="fill" />
-    </span>
-    <div>
-      <p className="font-semibold">{criticalityLabel[criticality]}</p>
-      <p className="text-xs text-zinc-500">{playbackLabel[status]}</p>
-    </div>
-  </div>
-)
-
-const TransportButton = ({
-  label,
-  icon,
-  onClick,
-  disabled,
-}: {
-  label: string
-  icon: ReactNode
-  onClick: () => void
-  disabled?: boolean
-}) => (
-  <button
-    aria-label={label}
-    className={clsx(
-      'inline-flex min-w-0 flex-col items-center justify-center gap-2 rounded-[1rem] border px-3 py-3 text-center text-[11px] font-medium leading-none transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]',
-      disabled
-        ? 'cursor-not-allowed border-zinc-200/70 bg-zinc-100/60 text-zinc-400'
-        : 'border-zinc-200/90 bg-zinc-50/90 text-zinc-700 hover:border-zinc-300/80 hover:bg-white',
-    )}
-    disabled={disabled}
-    onClick={onClick}
-    type="button"
-  >
-    {icon}
-    <span>{label}</span>
-  </button>
-)
-
-const TransportControls = ({
-  onStep,
-  onReset,
-  currentStepIndex,
-  totalSteps,
-}: {
-  onStep: () => void
-  onReset: () => void
-  currentStepIndex: number
-  totalSteps: number
-}) => (
-  <div className="space-y-4">
-    <div className="grid grid-cols-2 gap-2" data-testid="transport-bar">
-      <TransportButton disabled={currentStepIndex >= totalSteps - 1} icon={<Steps size={18} weight="bold" />} label="Шаг" onClick={onStep} />
-      <TransportButton icon={<ArrowClockwise size={18} weight="bold" />} label="Сброс" onClick={onReset} />
-    </div>
-
-    <ScenarioProgress currentStepIndex={currentStepIndex} totalSteps={totalSteps} />
-  </div>
-)
-
 export const ControlRail = ({
   state,
-  interactive,
-  onStep,
-  onReset,
-  onOpenLauncher,
 }: {
   state: PlaybackStoreState
-  interactive: boolean
+  interactive?: boolean
   onStep?: () => void
   onReset?: () => void
   onOpenLauncher?: () => void
 }) => (
-  <Surface className="xl:sticky xl:top-4" data-testid="control-rail">
-    <div className="space-y-6">
-      <div>
-        <p className="text-4xl font-semibold tracking-tight text-zinc-950">СИГМА</p>
-        <p className="mt-2 text-sm text-zinc-600">{presentText(state.scenario.title)}</p>
-      </div>
-
-      {interactive && onStep && onReset ? (
-        <TransportControls
-          currentStepIndex={state.currentStepIndex}
-          onReset={onReset}
-          onStep={onStep}
-          totalSteps={state.scenario.steps.length}
-        />
-      ) : (
-        <ScenarioProgress currentStepIndex={state.currentStepIndex} totalSteps={state.scenario.steps.length} />
-      )}
-
-      <div>
-        <div className="flex items-center gap-2">
-          <Eyebrow>Обстановка</Eyebrow>
-          <InfoButton
-            note={scenarioReferences[state.selectedScenarioId]?.situation}
-            testId="info-situation"
-          />
-        </div>
-        <p className="mt-2 text-sm leading-snug text-zinc-600">
-          Текущий: {presentText(state.scenario.tabLabel)}
+  <Surface className="xl:sticky xl:top-4 xl:max-h-[calc(100vh-2rem)] xl:overflow-y-auto" data-testid="control-rail">
+    <div className="space-y-5">
+      <div className="min-w-0">
+        <p className="font-mono text-[10px] uppercase tracking-[0.32em] text-zinc-400">Sigma · объект</p>
+        <p className="mt-1 break-words font-mono text-[10px] uppercase leading-relaxed tracking-[0.22em] text-zinc-500 line-clamp-2">
+          {presentText(state.objectCard.name)}
         </p>
-        {onOpenLauncher ? (
-          <button
-            aria-label="Открыть каталог сценариев"
-            className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-[1.1rem] border border-zinc-950 bg-zinc-950 px-4 py-3 text-sm font-semibold text-zinc-50 shadow-[0_12px_24px_-18px_rgba(15,23,42,0.5)] transition hover:bg-zinc-800"
-            data-testid="open-launcher"
-            onClick={onOpenLauncher}
-            type="button"
-          >
-            <GridFour size={18} weight="duotone" />
-            Каталог сценариев
-          </button>
-        ) : null}
       </div>
 
       <div>
@@ -312,22 +285,24 @@ export const ControlRail = ({
         <div className="mt-4 space-y-3">
           {state.zones.map((zoneItem) => {
             const ZoneIcon = zoneIcon[zoneItem.icon]
-            const focused = state.currentStep.scene === 'signal' && zoneItem.state !== 'normal'
             return (
               <article
                 key={zoneItem.id}
                 className={clsx(
-                  'rounded-[1.2rem] border bg-zinc-50/80 px-4 py-4',
-                  focused
-                    ? clsx('border-l-4 pl-[13px]', criticalityAccentBorder[zoneItem.state])
-                    : 'border-zinc-200/90',
+                  'rounded-[1.2rem] border border-zinc-200/90 border-l-4 px-4 py-4 pl-[13px] transition-colors',
+                  criticalityAccentBorder[zoneItem.state],
+                  criticalityRowTint[zoneItem.state],
                 )}
+                data-zone-state={zoneItem.state}
               >
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex items-start gap-3">
                     <span
                       aria-hidden
-                      className="mt-0.5 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-[0.75rem] bg-white text-zinc-700"
+                      className={clsx(
+                        'mt-0.5 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-[0.75rem] bg-white',
+                        criticalityText[zoneItem.state],
+                      )}
                     >
                       <IconGlyph of={ZoneIcon} size={16} weight="duotone" />
                     </span>
@@ -338,13 +313,13 @@ export const ControlRail = ({
                   </div>
                   <span
                     aria-label={`Состояние зоны: ${criticalityLabel[zoneItem.state]}`}
-                    className={clsx('mt-0.5 inline-flex h-5 w-5 items-center justify-center rounded-full', criticalityText[zoneItem.state])}
+                    className={clsx('mt-0.5 inline-flex h-6 w-6 items-center justify-center rounded-full bg-white', criticalityText[zoneItem.state])}
                     role="status"
                   >
-                    <IconGlyph of={criticalityIcon[zoneItem.state]} size={14} weight="fill" />
+                    <IconGlyph of={criticalityIcon[zoneItem.state]} size={15} weight="fill" />
                   </span>
                 </div>
-                <p className="mt-3 text-sm text-zinc-600">{presentText(zoneItem.statusLine)}</p>
+                <p className="mt-3 text-sm leading-snug text-zinc-700 line-clamp-3">{presentText(zoneItem.statusLine)}</p>
               </article>
             )
           })}
@@ -546,13 +521,14 @@ const OriginLabel: Record<'external' | 'internal' | 'hybrid', string> = {
 
 export const IncidentPanel = ({ state }: { state: PlaybackStoreState }) => {
   const theme = riskTheme[state.incident.riskKind]
-  const visibleRecommendations = state.incident.recommendations.slice(0, 2)
+  const visibleRecommendations = state.incident.recommendations.slice(0, 3)
   const completedTasks = state.tasks.filter((item) => item.status === 'done').length
   const keyTask = state.tasks.find((item) => item.status !== 'done') ?? state.tasks[0]
   const KeyTaskIcon = keyTask ? taskStatusIcon[keyTask.status] : null
   const OriginIcon = incidentOriginIcon[state.incident.origin]
   const focus = resolveFocus(state.currentStep.scene, state.criticality)
   const accent = focus.panel === 'incident' ? focus.accent : null
+  const doNotList = doNotByRisk[state.incident.riskKind]
 
   return (
     <Surface
@@ -582,78 +558,141 @@ export const IncidentPanel = ({ state }: { state: PlaybackStoreState }) => {
         </span>
       </div>
       <div className="mt-5 flex flex-1 flex-col gap-4">
-        <StageCard
-          body={presentText(state.incident.title)}
-          className="border-white/70 bg-white/76"
-          eyebrow="Что происходит"
-          title={criticalityLabel[state.incident.criticality]}
+        {/* Что происходит — контекст инцидента */}
+        <article
+          className={clsx(
+            'rounded-[1.45rem] border px-4 py-4',
+            criticalityAccentBorder[state.incident.criticality],
+            'border-l-4',
+            criticalityRowTint[state.incident.criticality],
+          )}
         >
-          <div className="mt-4 flex flex-wrap gap-2 text-xs text-zinc-700">
+          <div className="flex items-center gap-2">
             <span
-              className={clsx(
-                'inline-flex items-center gap-1.5 rounded-full border border-zinc-200/80 bg-white/90 px-2 py-1',
-                criticalityText[state.incident.criticality],
-              )}
+              aria-hidden
+              className={clsx('inline-flex h-6 w-6 items-center justify-center rounded-full bg-white', criticalityText[state.incident.criticality])}
             >
-              <IconGlyph of={criticalityIcon[state.incident.criticality]} size={12} weight="fill" />
-              {criticalityLabel[state.incident.criticality]}
+              <IconGlyph of={criticalityIcon[state.incident.criticality]} size={15} weight="fill" />
             </span>
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-zinc-200/80 bg-white/86 px-2 py-1">
-              <IconGlyph of={OriginIcon} size={12} weight="duotone" />
+            <p className="text-[10px] uppercase tracking-[0.24em] text-zinc-600">Что происходит</p>
+          </div>
+          <p className="mt-2 text-base font-semibold leading-snug text-zinc-950">
+            {presentText(state.incident.title)}
+          </p>
+          <p className="mt-1 text-sm leading-relaxed text-zinc-700">{presentText(state.incident.localizationStatus)}</p>
+          <div className="mt-3 flex flex-wrap gap-2 text-xs">
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-zinc-200/80 bg-white/90 px-2 py-1 text-zinc-700">
+              <IconGlyph of={OriginIcon} size={12} weight="duotone" className="text-sky-600" />
               {OriginLabel[state.incident.origin]}
             </span>
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-zinc-200/80 bg-white/86 px-2 py-1">
-              <IconGlyph of={ShieldCheck} size={12} weight="duotone" />
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-zinc-200/80 bg-white/90 px-2 py-1 text-zinc-700">
+              <IconGlyph of={ShieldCheck} size={12} weight="duotone" className="text-sky-600" />
               {state.incident.services.length} службы
             </span>
-          </div>
-          <div className="mt-3 flex flex-wrap gap-2 text-xs text-zinc-600">
-            {state.incident.services.map((service) => (
+            {state.incident.services.slice(0, 3).map((service) => (
               <span
                 key={service}
-                className="inline-flex items-center gap-1.5 rounded-full border border-zinc-200/70 bg-white/70 px-2 py-1"
+                className="inline-flex items-center gap-1.5 rounded-full border border-zinc-200/70 bg-white/80 px-2 py-1 text-zinc-700"
               >
-                <IconGlyph of={serviceIcon(service)} size={12} weight="duotone" />
+                <IconGlyph of={serviceIcon(service)} size={12} weight="duotone" className="text-sky-600" />
                 {presentText(service)}
               </span>
             ))}
           </div>
-          <p className="mt-3 text-sm leading-relaxed text-zinc-600">{presentText(state.incident.localizationStatus)}</p>
-        </StageCard>
+        </article>
 
-        <StageCard
-          body={visibleRecommendations[0] ? presentText(visibleRecommendations[0].title) : 'Меры появятся по мере развития ситуации'}
-          className="border-white/70 bg-white/76"
-          eyebrow="Что делать сейчас"
-          title={`${visibleRecommendations.length} действия`}
+        {/* Что делать — чек-лист действий */}
+        <article
+          className="rounded-[1.45rem] border border-emerald-200/90 bg-emerald-50/70 px-4 py-4"
+          data-testid="action-checklist"
         >
-          {visibleRecommendations.length > 1 ? (
-            <p className="mt-2 text-sm leading-relaxed text-zinc-600">{presentText(visibleRecommendations[1].title)}</p>
-          ) : null}
-        </StageCard>
+          <div className="flex items-center gap-2">
+            <span aria-hidden className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-white text-emerald-600">
+              <IconGlyph of={CheckCircle} size={15} weight="fill" />
+            </span>
+            <p className="text-[10px] uppercase tracking-[0.24em] text-emerald-800">Что делать сейчас</p>
+          </div>
+          {visibleRecommendations.length > 0 ? (
+            <ul className="mt-3 space-y-2">
+              {visibleRecommendations.map((item, index) => (
+                <li
+                  key={item.id}
+                  className="flex items-start gap-3 rounded-[1rem] border border-emerald-100/90 bg-white/85 px-3 py-2.5"
+                >
+                  <span className="mt-0.5 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-emerald-600 text-[11px] font-semibold text-white">
+                    {index + 1}
+                  </span>
+                  <div className="min-w-0">
+                    <p className="text-sm font-semibold leading-snug text-zinc-950">
+                      {presentText(item.title)}
+                    </p>
+                    <p className="mt-0.5 text-xs text-zinc-600">
+                      Исполняет: {presentText(item.owner)}
+                    </p>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="mt-3 text-sm text-emerald-900/80">Меры появятся по мере развития ситуации.</p>
+          )}
+        </article>
 
-        <StageCard
-          body={`${completedTasks} из ${state.tasks.length} задач завершено`}
-          className="border-white/70 bg-white/76"
-          eyebrow="Исполнение служб"
-          title={keyTask ? presentText(keyTask.title) : 'Ключевая задача не назначена'}
-        >
-          {keyTask && KeyTaskIcon ? (
-            <p className="mt-2 flex items-center gap-2 text-sm leading-relaxed text-zinc-600">
-              <IconGlyph
-                of={KeyTaskIcon}
-                size={14}
-                weight="duotone"
-                className={clsx(
-                  keyTask.status === 'in-progress' ? 'animate-spin text-amber-500' : undefined,
-                  keyTask.status === 'done' ? 'text-emerald-500' : undefined,
-                  keyTask.status === 'pending' ? 'text-zinc-500' : undefined,
-                )}
-              />
-              {taskStatusLabel[keyTask.status]} · {presentText(keyTask.service)}
-            </p>
-          ) : null}
-        </StageCard>
+        {/* Чего не делать */}
+        {doNotList.length > 0 ? (
+          <article className="rounded-[1.45rem] border border-rose-200/90 bg-rose-50/70 px-4 py-4">
+            <div className="flex items-center gap-2">
+              <span aria-hidden className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-white text-rose-600">
+                <IconGlyph of={Prohibit} size={15} weight="fill" />
+              </span>
+              <p className="text-[10px] uppercase tracking-[0.24em] text-rose-800">Чего не делать</p>
+            </div>
+            <ul className="mt-3 space-y-2">
+              {doNotList.map((rule) => (
+                <li
+                  key={rule}
+                  className="flex items-start gap-2 rounded-[1rem] border border-rose-100/80 bg-white/80 px-3 py-2.5 text-sm leading-snug text-zinc-700"
+                >
+                  <IconGlyph of={Prohibit} size={14} weight="bold" className="mt-1 shrink-0 text-rose-500" />
+                  <span>{rule}</span>
+                </li>
+              ))}
+            </ul>
+          </article>
+        ) : null}
+
+        {/* Исполнение служб — мини-индикатор */}
+        <article className="rounded-[1.45rem] border border-sky-200/80 bg-sky-50/60 px-4 py-4">
+          <div className="flex items-center gap-2">
+            <span aria-hidden className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-white text-sky-600">
+              <IconGlyph of={ShieldCheck} size={15} weight="duotone" />
+            </span>
+            <p className="text-[10px] uppercase tracking-[0.24em] text-sky-800">Исполнение служб</p>
+          </div>
+          <p className="mt-2 text-sm font-semibold text-zinc-950">
+            {keyTask ? presentText(keyTask.title) : 'Ключевая задача не назначена'}
+          </p>
+          <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-zinc-600">
+            <span className="rounded-full bg-white/80 px-2 py-1 font-medium text-sky-700">
+              {completedTasks} из {state.tasks.length} задач завершено
+            </span>
+            {keyTask && KeyTaskIcon ? (
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-white/80 px-2 py-1">
+                <IconGlyph
+                  of={KeyTaskIcon}
+                  size={13}
+                  weight="duotone"
+                  className={clsx(
+                    keyTask.status === 'in-progress' ? 'animate-spin text-amber-500' : undefined,
+                    keyTask.status === 'done' ? 'text-emerald-500' : undefined,
+                    keyTask.status === 'pending' ? 'text-zinc-500' : undefined,
+                  )}
+                />
+                {taskStatusLabel[keyTask.status]} · {presentText(keyTask.service)}
+              </span>
+            ) : null}
+          </div>
+        </article>
 
         <DetailReveal className="mt-auto" label="Подробности решения">
           <p>{presentText(state.incident.summary)}</p>
@@ -708,22 +747,62 @@ export const ForecastPanel = ({ state }: { state: PlaybackStoreState }) => {
   return (
     <PanelSurface accent={accent} active={state.activePanel} className="flex h-full flex-col" data-testid="forecast-summary" panel="forecast">
       <div className="flex items-center gap-2">
-        <IconGlyph of={timelineEventIcon.forecast} size={14} weight="duotone" className="text-zinc-500" />
+        <IconGlyph of={timelineEventIcon.forecast} size={14} weight="duotone" className="text-sky-600" />
         <Eyebrow>Прогноз</Eyebrow>
       </div>
       <div className="mt-4 flex flex-1 flex-col gap-4">
-        <StageCard
-          body={latestEvent?.at ?? presentText(state.forecast.timeToWorsen)}
-          title={latestEvent ? presentText(latestEvent.title) : presentText(state.forecast.title)}
-          eyebrow="Последнее событие"
-        >
-          <div className="mt-2 flex items-center gap-2 text-xs uppercase tracking-[0.22em] text-zinc-500">
-            <IconGlyph of={LatestIcon} size={12} weight="duotone" />
-            {latestEvent ? latestEvent.sourceLabel : 'прогноз'}
+        {/* Последнее событие — якорь контекста */}
+        <article className="rounded-[1.45rem] border border-sky-200/80 bg-sky-50/60 px-4 py-4">
+          <div className="flex items-center gap-2">
+            <span aria-hidden className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-white text-sky-600">
+              <IconGlyph of={LatestIcon} size={14} weight="duotone" />
+            </span>
+            <p className="text-[10px] uppercase tracking-[0.24em] text-sky-800">Последнее событие</p>
           </div>
-        </StageCard>
-        <StageCard body={presentText(state.forecast.withSigma)} eyebrow="С вмешательством" title={presentText(state.forecast.timeToWorsen)} />
-        <StageCard body={presentText(state.forecast.withoutSigma)} eyebrow="Без вмешательства" title={presentText(state.forecast.preventedDamage)} />
+          <p className="mt-2 text-base font-semibold leading-snug text-zinc-950">
+            {latestEvent ? presentText(latestEvent.title) : presentText(state.forecast.title)}
+          </p>
+          <p className="mt-1 text-xs text-zinc-600">
+            {latestEvent ? `${latestEvent.at} · ${latestEvent.sourceLabel}` : presentText(state.forecast.timeToWorsen)}
+          </p>
+        </article>
+
+        {/* Два сценария прогноза — визуальные стрелки */}
+        <div className="grid gap-3 md:grid-cols-2" data-testid="forecast-arrows">
+          <article className="relative flex flex-col overflow-hidden rounded-[1.45rem] border border-emerald-200/90 bg-emerald-50/70 px-4 py-4">
+            <div className="flex items-center gap-2">
+              <span aria-hidden className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-white text-emerald-600 shadow-[0_6px_16px_-10px_rgba(16,185,129,0.55)]">
+                <IconGlyph of={TrendDown} size={22} weight="bold" />
+              </span>
+              <p className="text-[10px] uppercase tracking-[0.24em] text-emerald-800">С вмешательством</p>
+            </div>
+            <p className="mt-3 text-base font-semibold text-emerald-900">Риск снижается</p>
+            <p className="mt-1 text-sm leading-relaxed text-zinc-700">
+              {presentText(state.forecast.withSigma)}
+            </p>
+            <span className="mt-3 inline-flex w-fit items-center gap-1.5 rounded-full bg-white/80 px-2 py-1 text-[11px] font-medium text-emerald-800">
+              <IconGlyph of={ShieldCheck} size={11} weight="duotone" />
+              Предотвращено: {presentText(state.forecast.preventedDamage)}
+            </span>
+          </article>
+
+          <article className="relative flex flex-col overflow-hidden rounded-[1.45rem] border border-rose-200/90 bg-rose-50/70 px-4 py-4">
+            <div className="flex items-center gap-2">
+              <span aria-hidden className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-white text-rose-600 shadow-[0_6px_16px_-10px_rgba(244,63,94,0.55)]">
+                <IconGlyph of={TrendUp} size={22} weight="bold" />
+              </span>
+              <p className="text-[10px] uppercase tracking-[0.24em] text-rose-800">Без вмешательства</p>
+            </div>
+            <p className="mt-3 text-base font-semibold text-rose-900">Риск растёт</p>
+            <p className="mt-1 text-sm leading-relaxed text-zinc-700">
+              {presentText(state.forecast.withoutSigma)}
+            </p>
+            <span className="mt-3 inline-flex w-fit items-center gap-1.5 rounded-full bg-white/80 px-2 py-1 text-[11px] font-medium text-rose-800">
+              <IconGlyph of={Warning} size={11} weight="duotone" />
+              Окно ухудшения: {presentText(state.forecast.timeToWorsen)}
+            </span>
+          </article>
+        </div>
       </div>
       <DetailReveal className="mt-auto" label="Подробности прогноза">
         {latestEvent ? (
@@ -762,6 +841,8 @@ export const ScenarioHeader = ({
 }) => {
   const sceneCopy = storyboardSceneCopy[state.currentStep.scene]
   const theme = riskTheme[state.incident.riskKind]
+  const copy = statusBannerCopy[state.criticality]
+  const StatusIcon = criticalityIcon[state.criticality]
   const sceneToTimelineType: Record<typeof state.currentStep.scene, 'signal' | 'event' | 'decision' | 'action' | 'forecast'> = {
     baseline: 'event',
     signal: 'signal',
@@ -772,14 +853,51 @@ export const ScenarioHeader = ({
   const SceneIcon = timelineEventIcon[sceneToTimelineType[state.currentStep.scene]]
 
   return (
-    <Surface className={clsx(theme.soft, theme.border)}>
-      <div className="flex flex-col gap-6 xl:flex-row xl:items-start xl:justify-between">
-        <div className="max-w-4xl">
-          <div className="flex flex-wrap items-center gap-3">
-            <Eyebrow>{presentText(state.objectCard.name)}</Eyebrow>
-            <span className={clsx('inline-flex items-center gap-2 rounded-full px-3 py-2 text-xs font-medium', theme.chip)}>
-              <IconGlyph of={SceneIcon} size={14} weight="duotone" />
+    <section
+      aria-live="polite"
+      className={clsx(
+        'overflow-hidden rounded-[2rem] border p-5 shadow-[0_22px_56px_-34px_rgba(15,23,42,0.28)] backdrop-blur-xl md:p-6',
+        copy.bg,
+        copy.border,
+      )}
+      data-status={state.criticality}
+      data-testid="status-banner"
+    >
+      <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+        <div className="flex min-w-0 items-center gap-5">
+          <span
+            aria-hidden
+            className={clsx(
+              'inline-flex h-20 w-20 shrink-0 items-center justify-center rounded-[1.6rem] border shadow-[0_12px_28px_-18px_rgba(15,23,42,0.28)]',
+              copy.border,
+              copy.iconBg,
+              copy.iconText,
+            )}
+          >
+            <IconGlyph of={StatusIcon} size={52} weight="fill" />
+          </span>
+          <div className="min-w-0">
+            <p className="font-mono text-[11px] uppercase tracking-[0.3em] text-zinc-600">
+              {criticalityLabel[state.criticality]} · {playbackLabel[state.playbackStatus]}
+            </p>
+            <p className={clsx('mt-1 text-3xl font-semibold uppercase tracking-tight md:text-4xl', copy.accent)}>
+              {copy.title}
+            </p>
+            <p className="mt-2 max-w-[54ch] text-sm leading-relaxed text-zinc-700">{copy.subtitle}</p>
+          </div>
+        </div>
+        <div className="min-w-0 lg:max-w-md lg:flex-shrink-0 lg:text-right">
+          <div className="flex flex-wrap items-center gap-2 lg:justify-end">
+            <span className={clsx('inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-medium', theme.chip)}>
+              <IconGlyph of={SceneIcon} size={13} weight="duotone" />
               {presentText(sceneCopy.eyebrow)}
+            </span>
+            <span
+              aria-label={`Риск-домен: ${state.incident.riskKind}`}
+              className={clsx('inline-flex min-w-0 max-w-full items-center gap-2 rounded-full px-3 py-1.5 text-xs font-medium', theme.chip)}
+            >
+              {riskChipIcon(state.incident.riskKind)}
+              <span className="truncate">{presentText(state.objectCard.name)}</span>
             </span>
             {!interactive ? (
               <span
@@ -792,12 +910,15 @@ export const ScenarioHeader = ({
               </span>
             ) : null}
           </div>
-          <h1 className="mt-4 text-3xl font-semibold tracking-tight text-zinc-950 md:text-4xl">{presentText(state.scenario.headline)}</h1>
-          <p className="mt-4 max-w-[72ch] text-sm leading-relaxed text-zinc-600">{presentText(state.scenario.subtitle)}</p>
+          <h1 className="mt-3 break-words text-xl font-semibold tracking-tight text-zinc-950 md:text-2xl">
+            {presentText(state.scenario.headline)}
+          </h1>
+          <p className="mt-1 max-w-[52ch] break-words text-xs leading-relaxed text-zinc-600 lg:ml-auto">
+            {presentText(state.scenario.subtitle)}
+          </p>
         </div>
-        <StatusPill criticality={state.criticality} status={state.playbackStatus} />
       </div>
-    </Surface>
+    </section>
   )
 }
 

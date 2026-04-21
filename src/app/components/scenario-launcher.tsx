@@ -1,4 +1,4 @@
-import { ArrowLeft, Monitor, Play, X } from '@phosphor-icons/react'
+import { ArrowLeft, Play, Television, X } from '@phosphor-icons/react'
 import clsx from 'clsx'
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
@@ -8,7 +8,7 @@ import type { DisplayMode, RiskKind, ScenarioDefinition, ScenarioId } from '../.
 import { listVenuesByPersona, personaLabel, venues } from '../venues'
 import type { Persona, VenueMeta } from '../venues'
 import { IconGlyph } from './icon-glyph'
-import { criticalityAccentBorder, criticalityText, riskIcon } from './icons'
+import { riskIcon } from './icons'
 
 const riskKindLabel: Record<RiskKind, string> = {
   thermal: 'Термический',
@@ -16,6 +16,42 @@ const riskKindLabel: Record<RiskKind, string> = {
   air: 'Воздух',
   security: 'Безопасность',
   operational: 'Операционный',
+}
+
+const riskChipTheme: Record<
+  RiskKind,
+  { active: string; inactive: string; iconColor: string; borderLeft: string }
+> = {
+  thermal: {
+    active: 'border-orange-500 bg-orange-500 text-white shadow-[0_8px_20px_-10px_rgba(249,115,22,0.55)]',
+    inactive: 'border-orange-200 bg-orange-50 text-orange-800 hover:border-orange-400',
+    iconColor: 'text-orange-600',
+    borderLeft: 'border-l-orange-500',
+  },
+  water: {
+    active: 'border-sky-500 bg-sky-500 text-white shadow-[0_8px_20px_-10px_rgba(14,165,233,0.55)]',
+    inactive: 'border-sky-200 bg-sky-50 text-sky-800 hover:border-sky-400',
+    iconColor: 'text-sky-600',
+    borderLeft: 'border-l-sky-500',
+  },
+  air: {
+    active: 'border-teal-500 bg-teal-500 text-white shadow-[0_8px_20px_-10px_rgba(20,184,166,0.55)]',
+    inactive: 'border-teal-200 bg-teal-50 text-teal-800 hover:border-teal-400',
+    iconColor: 'text-teal-600',
+    borderLeft: 'border-l-teal-500',
+  },
+  security: {
+    active: 'border-emerald-500 bg-emerald-500 text-white shadow-[0_8px_20px_-10px_rgba(16,185,129,0.55)]',
+    inactive: 'border-emerald-200 bg-emerald-50 text-emerald-800 hover:border-emerald-400',
+    iconColor: 'text-emerald-600',
+    borderLeft: 'border-l-emerald-500',
+  },
+  operational: {
+    active: 'border-indigo-500 bg-indigo-500 text-white shadow-[0_8px_20px_-10px_rgba(99,102,241,0.55)]',
+    inactive: 'border-indigo-200 bg-indigo-50 text-indigo-800 hover:border-indigo-400',
+    iconColor: 'text-indigo-600',
+    borderLeft: 'border-l-indigo-500',
+  },
 }
 
 const allRiskKinds: RiskKind[] = ['thermal', 'water', 'air', 'security', 'operational']
@@ -177,37 +213,38 @@ export const ScenarioLauncher = ({
     <div
       aria-label="Каталог сценариев"
       aria-modal
-      className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-zinc-950/40 px-4 py-8 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex justify-end bg-zinc-950/40 backdrop-blur-sm"
       data-testid="scenario-launcher"
+      onClick={handleClose}
       role="dialog"
     >
       <section
-        className="flex w-full max-w-6xl flex-col rounded-[2rem] border border-white/60 bg-white/95 p-6 shadow-[0_24px_64px_-24px_rgba(15,23,42,0.32)] md:p-8"
+        className="relative flex h-full w-full max-w-md flex-col overflow-y-auto bg-white/98 shadow-[-24px_0_64px_-24px_rgba(15,23,42,0.32)]"
         onClick={(event) => event.stopPropagation()}
       >
-        <header className="flex items-start justify-between gap-4">
+        <header className="sticky top-0 z-10 flex items-start justify-between gap-3 border-b border-zinc-200/70 bg-white/95 px-5 py-4 backdrop-blur-md">
           <div>
-            <p className="font-mono text-[11px] uppercase tracking-[0.32em] text-zinc-500">
-              Каталог
-            </p>
-            <h2 className="mt-2 text-2xl font-semibold tracking-tight text-zinc-950 md:text-3xl">
+            <p className="font-mono text-[10px] uppercase tracking-[0.32em] text-zinc-500">Каталог</p>
+            <h2 className="mt-1 text-xl font-semibold tracking-tight text-zinc-950">
               {step === 'filters' ? 'Сценарии Sigma' : 'Отобранные сценарии'}
             </h2>
-            <p className="mt-2 max-w-[60ch] text-sm leading-relaxed text-zinc-600">
+            <p className="mt-1 text-xs leading-relaxed text-zinc-600">
               {step === 'filters'
-                ? 'Выберите персону и типы инцидентов. Применить — перейти к списку подходящих сценариев.'
-                : `Под текущие фильтры: ${describeActiveFilters(personaFilter, riskFilter)}.`}
+                ? 'Выберите персону и типы инцидентов.'
+                : `Под фильтры: ${describeActiveFilters(personaFilter, riskFilter)}.`}
             </p>
           </div>
           <button
             aria-label="Закрыть каталог"
-            className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-zinc-200 bg-white text-zinc-600 transition hover:border-zinc-400 hover:text-zinc-900"
+            className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-zinc-200 bg-white text-zinc-600 transition hover:border-zinc-400 hover:text-zinc-900"
             onClick={handleClose}
             type="button"
           >
-            <X size={18} weight="bold" />
+            <X size={16} weight="bold" />
           </button>
         </header>
+
+        <div className="flex-1 px-5 py-4">
 
         {step === 'filters' ? (
           <FiltersStep
@@ -232,6 +269,7 @@ export const ScenarioLauncher = ({
             onSelect={handleSelect}
           />
         )}
+        </div>
       </section>
     </div>
   )
@@ -295,6 +333,7 @@ const FiltersStep = ({
           const active = riskFilter.has(kind)
           const count = riskCounts[kind]
           const isEmpty = count === 0
+          const theme = riskChipTheme[kind]
           return (
             <button
               key={kind}
@@ -304,14 +343,19 @@ const FiltersStep = ({
                 isEmpty
                   ? 'border-zinc-200 bg-zinc-50 text-zinc-300'
                   : active
-                    ? 'border-zinc-950 bg-zinc-950 text-zinc-50'
-                    : 'border-zinc-200 bg-white text-zinc-500 hover:border-zinc-400',
+                    ? theme.active
+                    : theme.inactive,
               )}
               data-empty={isEmpty ? 'true' : 'false'}
               onClick={() => onToggleRisk(kind)}
               type="button"
             >
-              <IconGlyph of={riskIcon[kind]} size={14} weight="duotone" />
+              <IconGlyph
+                of={riskIcon[kind]}
+                size={14}
+                weight="duotone"
+                className={clsx(!isEmpty && !active ? theme.iconColor : undefined)}
+              />
               {riskKindLabel[kind]}
             </button>
           )
@@ -375,9 +419,9 @@ const ResultsStep = ({
       </button>
     </div>
 
-    <div className="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+    <div className="mt-4 grid gap-3">
       {cards.length === 0 ? (
-        <p className="col-span-full rounded-[1.4rem] border border-dashed border-zinc-300 bg-white/70 px-5 py-8 text-center text-sm text-zinc-500">
+        <p className="rounded-[1.4rem] border border-dashed border-zinc-300 bg-white/70 px-5 py-8 text-center text-sm text-zinc-500">
           Под выбранные фильтры сценариев нет. Вернитесь к фильтрам и расширьте выборку.
         </p>
       ) : (
@@ -448,53 +492,57 @@ const VenueCard = ({
         </div>
       </header>
 
-      <div className="mt-4 space-y-3">
+      <div className="mt-4 space-y-2">
         {card.scenarios.map(({ definition, riskKind }) => {
           const isCurrent = definition.id === currentScenarioId
           const RiskIcon = riskIcon[riskKind]
+          const theme = riskChipTheme[riskKind]
           return (
             <div
               key={definition.id}
               className={clsx(
-                'rounded-[1.1rem] border bg-zinc-50/60 px-4 py-3',
-                isCurrent
-                  ? clsx('border-l-4', criticalityAccentBorder.watch)
-                  : 'border-zinc-200/80',
+                'rounded-[1.1rem] border border-zinc-200/80 border-l-4 bg-zinc-50/60 px-3 py-2.5',
+                theme.borderLeft,
               )}
             >
-              <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0">
-                  <div className="flex items-center gap-2">
-                    <span className={clsx('inline-flex h-5 w-5 items-center justify-center rounded-full', criticalityText.elevated)}>
-                      <IconGlyph of={RiskIcon} size={12} weight="fill" />
+              <div className="min-w-0">
+                <div className="flex items-center gap-2">
+                  <IconGlyph of={RiskIcon} size={14} weight="duotone" className={theme.iconColor} />
+                  <p className="truncate text-sm font-semibold text-zinc-950">{definition.tabLabel}</p>
+                  {isCurrent ? (
+                    <span className="shrink-0 rounded-full border border-emerald-200 bg-emerald-50 px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-[0.22em] text-emerald-700">
+                      Открыт
                     </span>
-                    <p className="truncate text-sm font-semibold text-zinc-950">{definition.tabLabel}</p>
-                  </div>
-                  <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-zinc-500">
-                    {definition.subtitle}
-                  </p>
+                  ) : null}
                 </div>
-                {isCurrent ? (
-                  <span className="shrink-0 rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 font-mono text-[9px] uppercase tracking-[0.22em] text-emerald-700">
-                    Открыт
-                  </span>
-                ) : null}
+                <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-zinc-500">
+                  {definition.subtitle}
+                </p>
               </div>
-              <div className="mt-3 flex gap-2">
-                <LaunchButton
-                  ariaLabel="Открыть сценарий в режиме оператора: управление шагами, задачами, эскалацией"
-                  highlighted={!isCurrent || currentMode !== 'operator'}
-                  icon={<Play size={12} weight="fill" />}
-                  label="Открыть"
+              <div className="mt-3 flex items-center gap-1.5">
+                <button
+                  aria-label="Открыть сценарий в режиме оператора: управление шагами, задачами, эскалацией"
+                  className={clsx(
+                    'inline-flex flex-1 items-center justify-center gap-1.5 rounded-full border px-3 py-1.5 text-[11px] font-semibold transition',
+                    !isCurrent || currentMode !== 'operator'
+                      ? 'border-zinc-950 bg-zinc-950 text-white hover:bg-zinc-800'
+                      : 'border-zinc-200 bg-white text-zinc-700 hover:border-zinc-400',
+                  )}
                   onClick={() => onSelect(definition.id, 'operator')}
-                />
-                <LaunchButton
-                  ariaLabel="Открыть вкладку видеостены в новом окне браузера: только показ, можно перетащить на стеновой экран"
-                  highlighted={false}
-                  icon={<Monitor size={12} weight="duotone" />}
-                  label="На видеостену"
+                  type="button"
+                >
+                  <Play size={11} weight="fill" />
+                  Открыть
+                </button>
+                <button
+                  aria-label="Открыть вкладку видеостены в новом окне браузера: только показ, можно перетащить на стеновой экран"
+                  className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-zinc-200 bg-white text-zinc-600 transition hover:border-sky-400 hover:bg-sky-50 hover:text-sky-700"
                   onClick={() => onSelect(definition.id, 'display')}
-                />
+                  type="button"
+                >
+                  <Television size={14} weight="duotone" />
+                  <span className="sr-only">На видеостену</span>
+                </button>
               </div>
             </div>
           )
@@ -503,32 +551,3 @@ const VenueCard = ({
     </article>
   )
 }
-
-const LaunchButton = ({
-  label,
-  ariaLabel,
-  icon,
-  highlighted,
-  onClick,
-}: {
-  label: string
-  ariaLabel: string
-  icon: React.ReactNode
-  highlighted: boolean
-  onClick: () => void
-}) => (
-  <button
-    aria-label={ariaLabel}
-    className={clsx(
-      'inline-flex flex-1 items-center justify-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition',
-      highlighted
-        ? 'border-zinc-950 bg-zinc-950 text-zinc-50 hover:bg-zinc-800'
-        : 'border-zinc-200 bg-white text-zinc-700 hover:border-zinc-400',
-    )}
-    onClick={onClick}
-    type="button"
-  >
-    {icon}
-    {label}
-  </button>
-)
