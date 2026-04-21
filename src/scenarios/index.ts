@@ -10,6 +10,9 @@ export const scenarioIds: ScenarioId[] = [
   'air-quality-co2',
   'dormitory-flood',
   'lab-access-breach',
+  'access-no-pass',
+  'access-guarantors',
+  'edds-mode-change',
 ]
 
 const routeAliases: Record<string, ScenarioId> = {

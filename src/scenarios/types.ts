@@ -4,6 +4,9 @@ export type ScenarioId =
   | 'air-quality-co2'
   | 'dormitory-flood'
   | 'lab-access-breach'
+  | 'access-no-pass'
+  | 'access-guarantors'
+  | 'edds-mode-change'
 export type ZoneId = 'zone-a' | 'zone-b' | 'zone-c'
 export type Criticality = 'normal' | 'watch' | 'elevated' | 'high' | 'critical'
 export type RunMode = 'manual' | 'auto'
@@ -12,7 +15,7 @@ export type TimelineEventType = 'signal' | 'event' | 'decision' | 'action' | 'fo
 export type DisplayMode = 'operator' | 'display'
 export type StoryboardSceneKind = 'baseline' | 'signal' | 'decision' | 'action' | 'outcome'
 export type SourceKind = 'sensor' | 'external' | 'manual' | 'virtual' | 'actuator' | 'video-analytic'
-export type RiskKind = 'thermal' | 'water' | 'air' | 'security'
+export type RiskKind = 'thermal' | 'water' | 'air' | 'security' | 'operational'
 export type IncidentOrigin = 'internal' | 'external' | 'hybrid'
 export type TaskStatus = 'pending' | 'in-progress' | 'done'
 export type ValveState = 'idle' | 'standby' | 'closing' | 'closed'
@@ -32,6 +35,19 @@ export type ZoneIconKey =
   | 'leak-collector'
   | 'laboratory'
   | 'perimeter-gate'
+  | 'turnstile'
+  | 'waiting-area'
+  | 'cloud-verification'
+  | 'dispatch-room'
+  | 'city-monitoring'
+  | 'call-center-112'
+
+/**
+ * Тип развития инцидента во времени.
+ * escalating — критичность монотонно растёт до action, потом может снижаться (адверсариал-сценарии).
+ * resolving — пик на signal, дальше монотонно снижается к outcome (верификационные потоки).
+ */
+export type InvariantProfile = 'escalating' | 'resolving'
 
 export interface RecommendationItem {
   id: string
@@ -229,6 +245,9 @@ export interface ScenarioDefinition {
   tabLabel: string
   subtitle: string
   scenarioNumber: string
+  invariantProfile: InvariantProfile
+  /** Ссылка на venue в реестре src/app/venues.ts. Опциональна для обратной совместимости. */
+  venueId?: string
   cityContext: CityContextSnapshot
   sources: SignalSource[]
   smartphoneActions: SmartphoneAction[]

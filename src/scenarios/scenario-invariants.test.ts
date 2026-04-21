@@ -8,6 +8,7 @@ import {
   timelineEventIcon,
   zoneIcon,
 } from '../app/components/icons'
+import { venues } from '../app/venues'
 import type { Criticality, ScenarioDefinition, ScenarioStep, StoryboardSceneKind } from './types'
 import { scenarios } from './index'
 
@@ -35,17 +36,22 @@ describe.each(scenarioList.map((scenario) => [scenario.id, scenario] as const))(
       expect(kinds.size).toBe(1)
     })
 
-    it('raises criticality monotonically from baseline to action', () => {
-      const path = scenario.steps.slice(0, 4).map((step) => criticalityRank[step.systemCriticality])
-      for (let i = 1; i < path.length; i += 1) {
-        expect(path[i]).toBeGreaterThanOrEqual(path[i - 1])
+    it('follows its invariant profile — escalating rises to action, resolving peaks at signal', () => {
+      const ranks = scenario.steps.map((step) => criticalityRank[step.systemCriticality])
+      if (scenario.invariantProfile === 'escalating') {
+        // baseline → action must be non-decreasing
+        for (let i = 1; i < 4; i += 1) {
+          expect(ranks[i]).toBeGreaterThanOrEqual(ranks[i - 1])
+        }
+        // outcome can stay flat or de-escalate vs action
+        expect(ranks[4]).toBeLessThanOrEqual(ranks[3])
+      } else {
+        // resolving: step 1 (signal) is the peak; from signal onward must be non-increasing
+        expect(ranks[1]).toBeGreaterThanOrEqual(ranks[0])
+        for (let i = 2; i < ranks.length; i += 1) {
+          expect(ranks[i]).toBeLessThanOrEqual(ranks[i - 1])
+        }
       }
-    })
-
-    it('allows the outcome step to stay flat or de-escalate vs the action step', () => {
-      const action = criticalityRank[scenario.steps[3].systemCriticality]
-      const outcome = criticalityRank[scenario.steps[4].systemCriticality]
-      expect(outcome).toBeLessThanOrEqual(action)
     })
 
     it('keeps a non-empty sourceLabel for every timeline event', () => {
@@ -79,12 +85,17 @@ describe.each(scenarioList.map((scenario) => [scenario.id, scenario] as const))(
       expect(confirmable).toBe(true)
     })
 
-    it('carries a pending escalation task at the action step', () => {
-      const actionStep: ScenarioStep = scenario.steps[3]
-      const pendingEscalation = actionStep.tasks.some(
-        (t) => t.status === 'pending' && /эскалац/i.test(t.title),
+    it('exposes a confirmable action with a pending task title at the step where canConfirm first flips on', () => {
+      const firstConfirmableIdx = scenario.steps.findIndex((s) => s.incident.escalation.canConfirm)
+      expect(firstConfirmableIdx).toBeGreaterThan(0)
+      const step: ScenarioStep = scenario.steps[firstConfirmableIdx]
+      const titleMatcher = scenario.invariantProfile === 'escalating'
+        ? /эскалац/i
+        : /кнопк|подтверд|разрешить/i
+      const pendingAction = step.tasks.some(
+        (t) => t.status === 'pending' && titleMatcher.test(t.title),
       )
-      expect(pendingEscalation).toBe(true)
+      expect(pendingAction).toBe(true)
     })
 
     it('keeps activeSourceIds a subset of declared sources on every step', () => {
@@ -129,6 +140,11 @@ describe.each(scenarioList.map((scenario) => [scenario.id, scenario] as const))(
           expect(taskStatusIcon[task.status]).toBeDefined()
         }
       }
+    })
+
+    it('references a venue that exists in the venue registry', () => {
+      expect(scenario.venueId).toBeTruthy()
+      expect(venues[scenario.venueId as string]).toBeDefined()
     })
 
     it('maps every criticality used in the scenario to a registered icon', () => {

@@ -1,5 +1,6 @@
 import {
   ArrowSquareIn,
+  Barricade,
   Bed,
   Bell,
   Brain,
@@ -7,6 +8,7 @@ import {
   CheckCircle,
   CircleNotch,
   ClipboardText,
+  Cloud,
   Desktop,
   DoorOpen,
   Drop,
@@ -18,13 +20,18 @@ import {
   Flask,
   Gauge,
   GitBranch,
+  HandHeart,
   HardDrives,
   Headset,
   Hourglass,
+  IdentificationCard,
   Key,
   Lightning,
+  MapPinLine,
+  Monitor,
   Path,
   PersonSimpleWalk,
+  PhoneCall,
   Plug,
   Pulse,
   ShieldCheck,
@@ -35,6 +42,7 @@ import {
   Thermometer,
   TrendUp,
   Tree,
+  Users,
   VideoCamera,
   Warning,
   WarningOctagon,
@@ -64,6 +72,9 @@ export const scenarioTabIcon: Record<ScenarioId, IconComponent> = {
   'air-quality-co2': Tree,
   'dormitory-flood': Bed,
   'lab-access-breach': ShieldWarning,
+  'access-no-pass': IdentificationCard,
+  'access-guarantors': HandHeart,
+  'edds-mode-change': Headset,
 }
 
 /** Risk-kind icon — used in chips and watermarks. */
@@ -72,6 +83,7 @@ export const riskIcon: Record<RiskKind, IconComponent> = {
   water: Waves,
   air: Wind,
   security: ShieldWarning,
+  operational: Broadcast,
 }
 
 /** Criticality lamp icon — 5 states. */
@@ -149,6 +161,12 @@ export const zoneIcon: Record<ZoneIconKey, IconComponent> = {
   'leak-collector': Drop,
   laboratory: Flask,
   'perimeter-gate': ArrowSquareIn,
+  turnstile: Barricade,
+  'waiting-area': Users,
+  'cloud-verification': Cloud,
+  'dispatch-room': Monitor,
+  'city-monitoring': MapPinLine,
+  'call-center-112': PhoneCall,
 }
 
 /** Service receiver icons — matched by substring of the service label. */

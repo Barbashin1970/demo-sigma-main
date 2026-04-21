@@ -68,6 +68,39 @@ const expectations: Record<ScenarioId, { tabLabel: RegExp; riskKind: string; ste
       { step: 4, criticality: 'watch', narrativeMatch: /задержани|периметр/i, minTasks: 4, canConfirmEscalation: true },
     ],
   },
+  'access-no-pass': {
+    tabLabel: /забытый пропуск/i,
+    riskKind: 'security',
+    steps: [
+      { step: 0, criticality: 'normal', narrativeMatch: /штатн|история|passtap/i, minTasks: 1, canConfirmEscalation: false, affectedZonesCount: 0 },
+      { step: 1, criticality: 'elevated', narrativeMatch: /без карты|не получил|faceembedding|видеодетектор|распознала лицо/i, minTasks: 2, canConfirmEscalation: false },
+      { step: 2, criticality: 'watch', narrativeMatch: /верифик|confidence|passcardid/i, minTasks: 2, canConfirmEscalation: true },
+      { step: 3, criticality: 'watch', narrativeMatch: /охранник нажал|турникет открыл|push|accessevent/i, minTasks: 2, canConfirmEscalation: true },
+      { step: 4, criticality: 'normal', narrativeMatch: /аудит|штатн|напоминан/i, minTasks: 2, canConfirmEscalation: false },
+    ],
+  },
+  'access-guarantors': {
+    tabLabel: /два поручител/i,
+    riskKind: 'security',
+    steps: [
+      { step: 0, criticality: 'normal', narrativeMatch: /штатн|актив/i, minTasks: 1, canConfirmEscalation: false, affectedZonesCount: 0 },
+      { step: 1, criticality: 'elevated', narrativeMatch: /нулев|без карты|истор|вернула ноль|0 совпад/i, minTasks: 2, canConfirmEscalation: false },
+      { step: 2, criticality: 'watch', narrativeMatch: /поручител|приложили карты|связк/i, minTasks: 2, canConfirmEscalation: true },
+      { step: 3, criticality: 'watch', narrativeMatch: /охранник нажал|турникет открыл|guarantor|accessevent/i, minTasks: 2, canConfirmEscalation: true },
+      { step: 4, criticality: 'normal', narrativeMatch: /аудит|штатн|деканат/i, minTasks: 2, canConfirmEscalation: false },
+    ],
+  },
+  'edds-mode-change': {
+    tabLabel: /смена режима|едд?с/i,
+    riskKind: 'operational',
+    steps: [
+      { step: 0, criticality: 'normal', narrativeMatch: /повседневн|штатн|журнал смены/i, minTasks: 1, canConfirmEscalation: false, affectedZonesCount: 0 },
+      { step: 1, criticality: 'watch', narrativeMatch: /адпи|одиночн|дежурный/i, minTasks: 2, canConfirmEscalation: false },
+      { step: 2, criticality: 'elevated', narrativeMatch: /паттерн|второй|метео|тренд/i, minTasks: 3, canConfirmEscalation: false },
+      { step: 3, criticality: 'high', narrativeMatch: /доклад|глав|оповеще|кчс/i, minTasks: 4, canConfirmEscalation: true },
+      { step: 4, criticality: 'high', narrativeMatch: /повышенн.*готовн|табло|перекл|режим/i, minTasks: 4, canConfirmEscalation: true },
+    ],
+  },
 }
 
 describe('scenario expectation tables', () => {

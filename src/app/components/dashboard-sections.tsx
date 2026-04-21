@@ -116,6 +116,14 @@ const riskTheme: Record<
     heroGradient: 'bg-gradient-to-br from-[#e3def2] to-[#cec5e6]',
     heroIconText: 'text-[#4c4a7a]',
   },
+  operational: {
+    chip: 'bg-[#eef1f5] text-[#384250]',
+    soft: 'bg-[#f6f8fa]',
+    border: 'border-[#dde3ea]',
+    dot: 'bg-[#6b7684]',
+    heroGradient: 'bg-gradient-to-br from-[#e6ebf1] to-[#ccd5de]',
+    heroIconText: 'text-[#384250]',
+  },
 }
 
 const riskChipIcon = (riskKind: RiskKind) => (
@@ -288,12 +296,14 @@ export const ControlRail = ({
   onScenarioSelect,
   onStep,
   onReset,
+  onOpenLauncher,
 }: {
   state: PlaybackStoreState
   interactive: boolean
   onScenarioSelect?: (id: ScenarioId) => void
   onStep?: () => void
   onReset?: () => void
+  onOpenLauncher?: () => void
 }) => (
   <Surface className="xl:sticky xl:top-4" data-testid="control-rail">
     <div className="space-y-6">
@@ -314,7 +324,20 @@ export const ControlRail = ({
       )}
 
       <div>
-        <Eyebrow>Обстановка</Eyebrow>
+        <div className="flex items-center justify-between gap-3">
+          <Eyebrow>Обстановка</Eyebrow>
+          {onOpenLauncher ? (
+            <button
+              aria-label="Открыть каталог сценариев"
+              className="inline-flex items-center gap-1.5 rounded-full border border-zinc-200/90 bg-white/90 px-3 py-1 text-[10px] font-medium uppercase tracking-[0.22em] text-zinc-600 transition hover:border-zinc-400 hover:text-zinc-900"
+              data-testid="open-launcher"
+              onClick={onOpenLauncher}
+              type="button"
+            >
+              Каталог
+            </button>
+          ) : null}
+        </div>
         <div className="mt-4">
           <ScenarioTabs onSelect={onScenarioSelect ?? (() => undefined)} selectedScenarioId={state.selectedScenarioId} />
         </div>
