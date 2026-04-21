@@ -50,6 +50,22 @@ Sigma — ИИ-прослойка над ситуационным центром
 - Tab-иконки: `IdentificationCard`, `HandHeart`
 - Концепты `PassTapEvent` / `VirtualPassToken` / `AccessEvent` — narrative-only (YAGNI)
 
+### UX-переделка leader-view (Phase 4.a/4.b + поверх плана)
+
+Закреплено как скилл [situational-center-ux](.agents/skills/situational-center-ux/SKILL.md). Готовые шаблоны можно переиспользовать в последующих ролях (trainer/leader).
+
+- **Status Banner** во всю ширину: крупная иконка-лампа 52–80 px, uppercase-надпись («СИСТЕМА В НОРМЕ» / «НАБЛЮДЕНИЕ» / «ПОВЫШЕННАЯ ГОТОВНОСТЬ» / «ВЫСОКИЙ РИСК» / «АКТИВНЫЙ ИНЦИДЕНТ»), фоновая подсветка по `Criticality` (emerald/amber/orange/red). Заголовок сценария ушёл в правый блок баннера как контекст
+- **Зоны объекта** — `border-l-4` в цвет состояния + мягкий тинт (`bg-emerald-50/55`, `bg-amber-50/70` и т. д.). Снимает проблему «три одинаковых строки с зелёной точкой»
+- **Do/Don't чек-лист** вместо абзаца в IncidentPanel: emerald-блок «Что делать сейчас» с нумерованным списком из `recommendations` + rose-блок «Чего не делать» из статического словаря `doNotByRisk` (термический / вода / воздух / безопасность / операционный)
+- **Прогноз стрелками** — `TrendDown` emerald / `TrendUp` rose вместо параграфов
+- **Цветовой код по семантике, не по данным**: info=sky, action=emerald, deny=rose, forecast-down=emerald, forecast-up=rose, criticality=лестница
+- **SigmaAssist** — floating-панель правом-нижнем углу: логотип/scenario title/progress/Шаг/Сброс/3 AI-подсказки/каталог. Сворачивается в FAB. В `display`-режиме прячутся транспорт и каталог, AI-подсказки остаются
+- **Левая панель = только зоны объекта** + тонкий watermark «Sigma · объект» (убрали логотип «СИГМА», транспорт и кнопку каталога из F-паттерн-дыры «хром браузера»)
+- **ScenarioLauncher → правый drawer** (`max-w-md`, sticky header, 1 колонка). Чипы рисков окрашены по стихии: огонь=orange, вода=sky, воздух=teal, безопасность=emerald, операционный=indigo. Полоса карточки сценария — в цвет риска
+- **Компактные кнопки действий**: primary «▶ Открыть» pill-button + secondary квадратная иконная кнопка с `<Television>` (24 px) и `sr-only` текстом «На видеостену»
+- **InfoButton** — кнопка + модалка в sky-тинте (`bg-sky-50`, `text-sky-600`). Содержимое — `RegulationNote` в [src/app/references.ts](src/app/references.ts): реальные пункты Положения ЕДДС Кольцово (5.3–5.6, 6.3–6.4) и инструкции НГУ Приложение №6 (пп. 1 и 2.1–2.2). Покрывает пожар в серверной и подозрительный предмет/лицо (в т. ч. «оставленный объект >5 мин» от видеодетектора)
+- **Скроллинг для видеостен** — inner overflow на ControlRail / SigmaAssist, sticky-хедеры, `line-clamp-2/3` на длинных строках
+
 ---
 
 ## Фаза 4 — Кольцово как индустриальный партнёр (активная)
@@ -77,14 +93,14 @@ Grounding: первый сценарий, где пользователь — н
 - Эскалация: глава поселка / первый заместитель — председатель КЧС и ОПБ
 
 **Технический чеклист:**
-- [ ] `RiskKind` += `'operational'`, `ScenarioId` += `'edds-mode-change'`
-- [ ] `ZoneIconKey` += `dispatch-room`, `city-monitoring`, `call-center-112`
-- [ ] `riskIcon.operational`, `scenarioTabIcon['edds-mode-change']`, три новых `zoneIcon`
-- [ ] `riskTheme.operational` — палитра slate/steel (нейтральная, управленческая)
-- [ ] `eddsVenueProfile` + `eddsSources` (8 источников по п. 10.2 регламента) + `eddsSteps` (5 шагов)
-- [ ] Регистрация в `scenarios` Record
-- [ ] Строка в expectation-таблице
-- [ ] `npm run test:run`, `npm run lint`, `npm run build`, dev-smoke
+- [x] `RiskKind` += `'operational'`, `ScenarioId` += `'edds-mode-change'`
+- [x] `ZoneIconKey` += `dispatch-room`, `city-monitoring`, `call-center-112`
+- [x] `riskIcon.operational`, `scenarioTabIcon['edds-mode-change']`, три новых `zoneIcon`
+- [x] `riskTheme.operational` — палитра slate/steel (нейтральная, управленческая)
+- [x] `eddsVenueProfile` + `eddsSources` + `eddsSteps` (5 шагов)
+- [x] Регистрация в `scenarios` Record
+- [x] Строка в expectation-таблице
+- [x] `npm run test:run`, `npm run lint`, `npm run build`, dev-smoke
 
 ### 4.b — Scenario Launcher (каталог сценариев модалкой)
 
@@ -127,13 +143,22 @@ interface ScenarioStepInteractiveMeta {
 
 Инвариант: если `interactiveMeta` заполнен — `expectedActions ⊂ allowedActions`, `maxDecisionTimeSec > 0`, `weight ≥ 0`.
 
-### 4.d — Маршруты `/trainer/*` + scoring-движок
+### 4.d — Маршруты `/trainer/*` + scoring-движок (MVP ✓, v2 планируется)
 
-- `/trainer/operator/:scenarioId` и `/trainer/leader/:scenarioId`
-- Паллбэк автопродвижения отключён; шаг не сдвигается без действия из `allowedActions`
-- Per-session state (store или extension `playbackStore`): `{stepId, userActions[], reactionTimeSec, score}`
-- Scoring: +weight за корректное действие, −weight/2 за неправильное, линейный штраф за превышение `maxDecisionTimeSec`
-- Таймер на шаге, кнопки из `allowedActions`, фиксация клика
+**Phase 4.d MVP (сделано):**
+- Маршрут `/trainer/:scenarioId` — [src/app/App.tsx](src/app/App.tsx)
+- Чистые функции scoring — [src/features/trainer/trainerSession.ts](src/features/trainer/trainerSession.ts): `scoreAction`, `totalPoints`, `maxPointsForScenario`, `passThreshold`, `findNextInteractiveStep`
+- UI — [src/app/components/trainer-screen.tsx](src/app/components/trainer-screen.tsx): StepPlay (narrative + allowedActions как кнопки + кнопка «Подсказка») + TrainerSummary (per-step breakdown + итог + порог допуска)
+- Scoring: `+weight` за корректное действие, `−weight/2` за prohibited, 0 за нейтральное. Линейный штраф за превышение `maxDecisionTimeSec`, ограничен полным `weight`
+- Baseline-шаги без `interactiveMeta` пролистываются автоматически (findNextInteractiveStep)
+- Порог допуска по умолчанию 70% от максимума (`passThreshold`)
+- Тесты: [src/features/trainer/trainerSession.test.ts](src/features/trainer/trainerSession.test.ts) (6 проверок scoring), [src/app/trainer.test.tsx](src/app/trainer.test.tsx) (7 e2e через React Router)
+
+**Осталось для v2:**
+- [ ] Визуальный таймер обратного отсчёта на шаге (сейчас время считается, но не показывается — пользователь видит только итоговую реакцию в summary)
+- [ ] Раздельные маршруты `/trainer/operator/:scenarioId` и `/trainer/leader/:scenarioId` — разные наборы `allowedActions` по роли. Требует расширения `interactiveMeta` → `Record<Role, ScenarioStepInteractiveMeta>`
+- [ ] Сохранение сессии в `localStorage` на случай перезагрузки
+- [ ] Touch-оптимизация (крупные кнопки, swipe между шагами) для видеостены
 
 ### 4.e — Аттестационный отчёт
 
@@ -142,11 +167,72 @@ interface ScenarioStepInteractiveMeta {
 - Итоговый балл и порог допуска к дежурству (70 по умолчанию)
 - Экспорт JSON одной кнопкой, без backend. Шаблон совместим с будущей отправкой в АИС ЦУКС — сама интеграция вне scope Phase 4
 
-### 4.f — Статичные подсказки (без AI)
+### 4.f — Статичные подсказки (✓ реализовано вместе с 4.d MVP)
 
-- Кнопка «Подсказка» на шаге тренажёра
-- Источник: `incident.recommendations[0].detail` и `explainability.decisionBasis` — уже есть в каталоге
-- AI-агент-наставник = Phase 5
+- Кнопка «Подсказка» на шаге тренажёра ([trainer-screen.tsx](src/app/components/trainer-screen.tsx))
+- Источник: `rationale` ожидаемого действия из `scenarioTrainerActions` + `clauseRef` шага из `scenarioTrainerMeta` — пример: «п. 8.5.2 — первичная фиксация сигнала»
+- AI-агент-наставник = Phase 5 (расширенный Sigma Assist)
+
+### 4.g — Регламенты в YAML/JSON, горячая замена (план)
+
+Отвязать доменные знания от UI-кода. Сейчас зашиты в TypeScript:
+
+- [src/app/references.ts](src/app/references.ts) — `RegulationNote` по scenarioId (выдержки регламентов НГУ/Кольцово)
+- [src/app/components/dashboard-sections.tsx](src/app/components/dashboard-sections.tsx) — `doNotByRisk: Record<RiskKind, string[]>` (запреты по стихии)
+- [src/scenarios/catalog.ts](src/scenarios/catalog.ts) — `recommendations`, `explainability`, timeline-события, narrative
+- (после 4.c) `interactiveMeta` — ожидаемые действия, `clauseRef`, веса шагов
+
+**Цель:** регламенты меняются заказчиком без пересборки. Операционный дежурный обновляет свой playbook → Sigma его подхватывает при следующей загрузке.
+
+**Направление:**
+- Тонкий loader: JSON/YAML → те же TS-типы через zod/valibot схемы и рантайм-валидацию
+- Идентификаторы источников / зон / сценариев остаются в коде (связка с иконками и компонентами), меняются только текстовые блоки и регуляторные параметры
+- Внешний YAML-редактор с live-preview — референсный проект на Railway у заказчика (готовый блок YAML editor с подсветкой схемы и валидацией). Посмотреть и адаптировать при старте фазы
+
+**Локальный референс:** папка `NSK_OpenData_Bot-main/` (не в репозитории, добавлена в `.gitignore`). Смотреть:
+- `config/city_profile_*.yaml` — декларативные профили городов: id, slug, районы, центр, bbox, стоп-слова, features. Паттерн «одна сущность — один YAML».
+- `config/canonical_schemas.yaml` — канонические схемы данных, ссылаемые из профилей.
+- Модуль `src/city_config.py` — пример loader'a YAML с валидацией и кэшированием.
+- `CITY_PROFILE=<name>` env-переменная — горячий переключатель профиля на запуске.
+
+Аналогично для Sigma: `config/scenarios/<scenarioId>.yaml`, `config/regulations/<authorId>.yaml` (НГУ, Кольцово), `config/risk-palette.yaml`. Переключение площадки — по env или URL-параметру.
+
+**Что может жить в YAML:**
+```yaml
+# scenarios/edds-mode-change.yaml
+id: edds-mode-change
+venueId: koltsovo-edds
+invariantProfile: escalating
+references:
+  situation:
+    title: Режимы функционирования ЕДДС
+    source: "Положение о ЕДДС МКУ «СВЕТОЧ», пп. 5.3–5.6"
+    body: |
+      Служба работает в трёх режимах...
+  actions:
+    title: Порядок доклада главе поселка
+    clauseRef: "6.3–6.4"
+doNotByRisk:
+  operational:
+    - Не переводить службу в режим ЧС без распоряжения главы
+    - Не эскалировать на город до подтверждения вторым источником
+steps:
+  - id: edds-s3-decision
+    interactiveMeta:
+      expectedActions: [report-to-head, request-forecast]
+      maxDecisionTimeSec: 60
+      weight: 10
+      clauseRef: "8.5.2:анализ-достоверности"
+```
+
+**Порядок выполнения:**
+- [ ] Определить границу «живое / хардкод»: что идёт в файл, что остаётся в TS (типы, иконки, handler-ы)
+- [ ] zod/valibot схема + loader с понятными ошибками при невалидном YAML
+- [ ] Переложить `references.ts` первым (самый живой слой)
+- [ ] Затем `doNotByRisk` и `interactiveMeta` (после 4.c)
+- [ ] Фаза 5: редактор с предпросмотром, diff, версионирование — взять блок из Railway-проекта заказчика
+
+**Почему сейчас только в планах:** до 4.c нет явной потребности — регламенты ещё дописываются. Плюс без scoring-движка (4.d) незачем дёргать `clauseRef`. Но закладываем: все новые сущности в 4.c — проектируем с прицелом «можно вынести в YAML».
 
 ---
 
@@ -154,11 +240,18 @@ interface ScenarioStepInteractiveMeta {
 
 Активируется после Phase 4.
 
-- **AI-агент-наставник** (LLM backend): онлайн-подсказки, разбор полётов, оценка нестандартных действий. Требует серверного компонента — выход за текущий фронтенд-only скоп
+- **Sigma Assist → настоящий AI-агент.** В Phase 4.b реализован прототип: 3 pre-defined промпта в SigmaAssist, ответы берутся из state (`explainability.causeEffectSummary`, `forecast.withoutSigma`, `forecast.withSigma`). Это заглушка для демо-стенда. В Phase 5 — LLM backend с доступом к:
+  - текущему snapshot сценария (зоны, инцидент, explainability, прогноз)
+  - регламентам из YAML (см. 4.g)
+  - истории действий оператора из тренажёра (4.d)
+  Свободный ввод вопроса + сохранение контекста диалога. Раскрытие ответа inline (как сейчас) или в отдельном панельном модуле
+- **AI-агент-наставник** в тренажёре: онлайн-подсказки на превышении `maxDecisionTimeSec`, разбор полётов на финальном экране, оценка нестандартных действий (вне `allowedActions`) через LLM-анализ соответствия регламенту
 - **Рандомизатор сценариев**: `shuffleNonCriticalSignals`, `jitterTimeWindowSec`, `optionalEvents`. Event-feed показывает сигналы как ленту с элементом случайности
+- **Интерактивные чек-листы с развилками**: развитие `RegulationNote` → `ChecklistNode` с массивом выборов. Оператор во время события отмечает «путь 1 / путь 2», сценарий идёт по выбранной ветке с соответствующими рекомендациями. Первый раз всплыло в 4.b как «справка по i-кнопке»; здесь превращается в активный чек-лист с ветвлением `ScenarioStep`-переходов
+- **Внешний редактор регламентов** (YAML/JSON live edit) — см. 4.g. В Phase 5 добавляется веб-интерфейс с превью: автор регламента редактирует YAML в браузере, видит изменения в демо в реальном времени. Готовый блок есть в Railway-проекте заказчика, адаптируем
 - **Экспорт для ЦУКС**: CSV/XML формат, согласование с ГУ МЧС России по НСО
 - **Ролевой UI**: Operator / Leader / Trainer / Observer с предустроенной раскладкой для каждой роли (сейчас дифференцируется только operator/display)
-- **Интерактивные чек-листы с развилками**: в Phase 4.b добавлены read-only справочные блоки через `RegulationNote` в [src/app/references.ts](src/app/references.ts). В Phase 5 развиваем до чек-листов с развилками: оператор во время события отмечает «путь 1 / путь 2», и сценарий идёт по выбранной ветке с соответствующими рекомендациями. Расширяет `RegulationNote` до `ChecklistNode` с массивом выборов и привязкой к `ScenarioStep`-переходам
+- **Touch-оптимизация видеостены**: тап по карточке → модалка с полным контентом (вместо `DetailReveal` аккордеона). Заложено в скилле [situational-center-ux](.agents/skills/situational-center-ux/SKILL.md) как следующий шаг
 
 ---
 

@@ -1,3 +1,4 @@
+import { scenarioTrainerActions, scenarioTrainerMeta } from './interactive-meta'
 import type {
   ActuatorSnapshot,
   CityObject,
@@ -20,6 +21,20 @@ import type {
   ZoneIconKey,
   ZoneId,
 } from './types'
+
+/**
+ * Phase 4.c — связывает массив шагов с `scenarioTrainerMeta`, чтобы сценарий
+ * в `/operator/*` и `/display/*` оставался как был, а `/trainer/*` (Phase 4.d)
+ * получил доступ к `step.interactiveMeta`.
+ */
+const withTrainerMeta = (scenarioId: ScenarioId, steps: ScenarioStep[]): ScenarioStep[] => {
+  const meta = scenarioTrainerMeta[scenarioId]
+  if (!meta) return steps
+  return steps.map((step) => {
+    const stepMeta = meta[step.id]
+    return stepMeta ? { ...step, interactiveMeta: stepMeta } : step
+  })
+}
 
 const zone = (
   id: ZoneId,
@@ -4618,7 +4633,8 @@ export const scenarios: Record<ScenarioId, ScenarioDefinition> = {
     cityContext: thermalSteps[0].cityContext,
     sources: thermalSources,
     smartphoneActions,
-    steps: thermalSteps,
+    steps: withTrainerMeta('thermal-incident', thermalSteps),
+    actions: scenarioTrainerActions['thermal-incident'],
   },
   'heat-inlet-breach': {
     id: 'heat-inlet-breach',
@@ -4716,6 +4732,7 @@ export const scenarios: Record<ScenarioId, ScenarioDefinition> = {
     cityContext: eddsSteps[0].cityContext,
     sources: eddsSources,
     smartphoneActions,
-    steps: eddsSteps,
+    steps: withTrainerMeta('edds-mode-change', eddsSteps),
+    actions: scenarioTrainerActions['edds-mode-change'],
   },
 }

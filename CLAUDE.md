@@ -9,13 +9,18 @@
 
 Sigma Demo — демонстрационный leader-view системы мониторинга городских инцидентов. Показывает, как руководитель города видит развитие инцидента на критическом объекте: городской контур → карточка объекта → таймлайн событий → рекомендации → задачи службам → прогноз с/без вмешательства.
 
-Домен — Smart City Emergency Management. В демо три сценария:
+Домен — Smart City Emergency Management. В демо 8 сценариев на 7 venues × 3 персоны (campus НГУ / city Новосибирск / municipal Кольцово):
 
 | `scenarioId` | Alias URL | Профиль площадки | Тип риска |
 |---|---|---|---|
 | `thermal-incident` | `/operator/hospital-fire` | Серверная НГУ, Академгородок | Термический (пожар) |
 | `heat-inlet-breach` | `/operator/hospital-breach` | Клиника Мешалкина, Красный проспект | Теплоноситель / вода |
 | `air-quality-co2` | `/operator/lab-overheat` | Лесопарк Академгородка | Качество воздуха / CO₂ |
+| `dormitory-flood` | — | Общежитие НГУ, блок Б | Вода (ночная протечка) |
+| `lab-access-breach` | — | Лаборатория 14Л-2 Технопарка НГУ | Безопасность (проникновение) |
+| `access-no-pass` | — | КПП учебного корпуса НГУ | Безопасность (виртуальный пропуск) |
+| `access-guarantors` | — | КПП учебного корпуса НГУ | Безопасность (проход по поручителям) |
+| `edds-mode-change` | — | ЕДДС МКУ «СВЕТОЧ», р.п. Кольцово | Операционный (переход режима) |
 
 ## Технологический стек
 
@@ -35,21 +40,33 @@ src/
 ├── App.tsx                           # re-export из app/App
 ├── app/
 │   ├── App.tsx                       # BrowserRouter + Routes + SceneRoute
-│   ├── storyboard.ts                 # метаданные scene kinds, getStoryboardScene / getFocusZones / getSceneMoments
+│   ├── storyboard.ts                 # метаданные scene kinds
+│   ├── focus-resolver.ts             # resolveFocus(scene, criticality) — какую панель подсвечивать
+│   ├── references.ts                 # RegulationNote + scenarioReferences (реальные выдержки регламентов для i-кнопки)
+│   ├── venues.ts                     # 7 venues × 3 персоны; Persona = campus | city | municipal
 │   └── components/
 │       ├── dashboard.tsx             # LeaderDashboard — композит всего экрана
-│       ├── dashboard-sections.tsx    # ControlRail, ScenarioHeader, IncidentPanel, ForecastPanel, ShellBackground
-│       └── dashboard-shared.tsx      # Surface, PanelSurface, Eyebrow, DetailReveal, StageCard, MetricTile, ScenarioProgress
+│       ├── dashboard-sections.tsx    # ControlRail (только зоны), ScenarioHeader (StatusBanner), IncidentPanel (do/don't), ForecastPanel (стрелки)
+│       ├── dashboard-shared.tsx      # Surface, PanelSurface, Eyebrow, DetailReveal, StageCard, MetricTile, ScenarioProgress
+│       ├── sigma-assist.tsx          # Floating panel bottom-right: логотип, progress, Шаг/Сброс, 3 AI-подсказки, каталог
+│       ├── scenario-launcher.tsx     # Правый drawer: фильтры persona+risk, карточки venue, цветные чипы по стихии
+│       ├── info-button.tsx           # i-кнопка в sky-тинте + InfoModal со справкой
+│       ├── icons.ts                  # Phosphor-хаб: risk/criticality/source/zone/task/timeline icons, criticalityText, criticalityAccentBorder
+│       ├── icon-glyph.tsx            # Тонкая обёртка над Phosphor для react-refresh
+│       └── trainer-screen.tsx        # /trainer/:scenarioId — StepPlay + TrainerSummary + подсказки
 ├── features/scenario-player/
 │   ├── playbackStore.ts              # external store: состояние, шаги, derive-функции, auto-advance
 │   ├── runtime.ts                    # usePlaybackState / usePlaybackActions / useScenarioRoute / usePlaybackSync
 │   └── syncBridge.ts                 # BroadcastChannel + localStorage fallback для operator↔display
+├── features/trainer/
+│   └── trainerSession.ts             # Phase 4.d: scoreAction / totalPoints / maxPointsForScenario / passThreshold / findNextInteractiveStep
 ├── scenarios/
-│   ├── types.ts                      # ScenarioId, Criticality, TimelineEvent, ScenarioStep, ScenarioDefinition...
+│   ├── types.ts                      # ScenarioId (8), RiskKind (5), InvariantProfile, Criticality, TimelineEvent, ScenarioStep, ScenarioStepInteractiveMeta, ScenarioActionDefinition, ScenarioDefinition
 │   ├── index.ts                      # публичный API + resolveScenarioId (route aliases)
-│   └── catalog.ts                    # 3 сценария × 5 шагов, snapshot-фабрики (zone, timeline, task, valve, light...)
+│   ├── catalog.ts                    # 8 сценариев × 5 шагов, snapshot-фабрики (zone, timeline, task, valve, light) + withTrainerMeta
+│   └── interactive-meta.ts           # Phase 4.c: scenarioTrainerActions + scenarioTrainerMeta (эталоны thermal-incident, edds-mode-change)
 ├── test/
-│   ├── setup.ts                      # BroadcastChannelMock для jsdom
+│   ├── setup.ts                      # BroadcastChannelMock для jsdom + afterEach(cleanup)
 │   └── repo-hygiene.test.ts          # запрет служебных артефактов
 └── index.css                         # @import 'tailwindcss' + CSS-переменные
 ```
@@ -59,8 +76,9 @@ src/
 Конфигурируется в [src/app/App.tsx](src/app/App.tsx):
 
 - `/` → `Navigate` на `/operator/hospital-fire`
-- `/operator/:scenarioId` — интерактивный режим с ControlRail
-- `/display/:scenarioId` — read-only (без управляющих действий)
+- `/operator/:scenarioId` — интерактивный режим с SigmaAssist + транспортом
+- `/display/:scenarioId` — read-only для видеостены, синхронизируется с оператором через BroadcastChannel
+- `/trainer/:scenarioId` — Phase 4.d: тренажёрный режим для сценариев с `interactiveMeta` (сейчас `thermal-incident`, `edds-mode-change`). Свои шаги, свой scoring, свой экран аттестации. Не использует `playbackStore` — локальный session state
 - `*` → fallback на `/operator/hospital-fire`
 
 `SceneRoute` читает `:scenarioId` через `useParams`, прогоняет через `resolveScenarioId` ([src/scenarios/index.ts](src/scenarios/index.ts)) для учёта legacy-алиасов и передаёт в `useScenarioRoute` — хук вызывает `playbackStore.selectScenario()`.
@@ -117,32 +135,49 @@ Action-методы: `start`, `pause`, `reset`, `setRunMode`, `nextStep`, `selec
 - `incident` + `explainability`
 - `tasks`, `forecast`, `actuators` (клапаны и сигнальные лампы)
 - `narrative`, `autoAdvanceAfterMs`
+- **`interactiveMeta?`** (Phase 4.c) — опциональная тренажёрная разметка: `expectedActions`, `allowedActions`, `maxDecisionTimeSec`, `weight`, `clauseRef`. Наполнена для `thermal-incident` и `edds-mode-change` через словарь в [interactive-meta.ts](src/scenarios/interactive-meta.ts). Сценарии без меты продолжают работать в `/operator/*` и `/display/*` как раньше, а `/trainer/*` их пропускает с сразу показанным summary
 
-Нет fetch/axios — все данные in-memory, демо полностью детерминировано.
+`ScenarioDefinition.actions?` — словарь `ScenarioActionDefinition` (id, label, service, `prohibited?`, `rationale?`). Используется тренажёром для рендера кнопок и для scoring: `prohibited=true` → штраф `−weight/2`, `rationale` — текст подсказки.
+
+Нет fetch/axios — все данные in-memory, демо полностью детерминировано. Phase 4.g планирует вынести текстовые блоки (`scenarioReferences`, `doNotByRisk`, `scenarioTrainerActions`) в YAML с hot-reload — см. референс в `NSK_OpenData_Bot-main/` (`.gitignore`).
 
 ## UI-слой
 
-Главный композит — `LeaderDashboard` в [src/app/components/dashboard.tsx](src/app/components/dashboard.tsx). Он оборачивается `ShellBackground` и раскладывает панели в грид `xl:grid-cols-[340px_minmax(0,1fr)]`:
+Главный композит — `LeaderDashboard` в [src/app/components/dashboard.tsx](src/app/components/dashboard.tsx). Он оборачивается `ShellBackground`. Layout:
 
-- **ControlRail** (только при `interactive`, режим `operator`) — выбор сценария, play/pause, step, reset, переключение manual/auto, смартфонный пульт с `confirmEscalation`
-- **ScenarioHeader** — заголовок, ScenarioProgress-степпер
-- **City / Object** панели — городской контур и карточка критического объекта
-- **IncidentPanel** — incident snapshot, explainability, таймлайн, список задач
-- **ForecastPanel** — прогноз с/без Sigma
+```
+[ ScenarioHeader — StatusBanner во всю ширину, цвет по критичности         ]
+[ ControlRail (280px)  | IncidentPanel (1.1fr)  | ForecastPanel (1fr)       ]
+[ SigmaAssist — floating bottom-right, позиция fixed                         ]
+[ ScenarioLauncher — правый drawer (max-w-md) по клику в SigmaAssist         ]
+```
+
+Секции:
+
+- **ScenarioHeader / StatusBanner** ([dashboard-sections.tsx](src/app/components/dashboard-sections.tsx)) — крупная иконка-лампа + uppercase-надпись по `statusBannerCopy[criticality]` («СИСТЕМА В НОРМЕ» / «НАБЛЮДЕНИЕ» / «ПОВЫШЕННАЯ ГОТОВНОСТЬ» / «ВЫСОКИЙ РИСК» / «АКТИВНЫЙ ИНЦИДЕНТ»). Фон и рамка подкрашены по критичности. Заголовок сценария — подзаголовок справа, не главный
+- **ControlRail** — только зоны объекта, sticky, inner-scroll. Watermark «Sigma · объект» + название venue
+- **IncidentPanel** — инцидент разбит на цветные блоки: `criticalityRowTint` «Что происходит», emerald «Что делать сейчас» (нумерованный чек-лист из `recommendations`), rose «Чего не делать» (из `doNotByRisk: Record<RiskKind, string[]>`), sky «Исполнение служб»
+- **ForecastPanel** — sky-блок «Последнее событие», две карточки-стрелки: emerald `TrendDown` «Риск снижается» и rose `TrendUp` «Риск растёт»
+- **SigmaAssist** ([sigma-assist.tsx](src/app/components/sigma-assist.tsx)) — Robot-логотип, текущий сценарий + i-кнопка «Обстановка», `ScenarioProgress`, Шаг/Сброс, 3 AI-подсказки (ответы из state), кнопка каталога. Сворачивается в pill-FAB. В `display`-режиме транспорт и каталог скрыты, AI-подсказки остаются
+- **ScenarioLauncher** ([scenario-launcher.tsx](src/app/components/scenario-launcher.tsx)) — правый drawer с фильтрами persona+risk и карточками venue. Чипы рисков окрашены по стихии (thermal=orange, water=sky, air=teal, security=emerald, operational=indigo). Кнопки сценария: «▶ Открыть» (полная ширина) + квадратная иконка `<Television>` с `sr-only` текстом «На видеостену» — открывает display-режим в новой вкладке
+- **InfoButton + InfoModal** ([info-button.tsx](src/app/components/info-button.tsx)) — sky-кнопка 24 px с Info-иконкой. Модалка в sky-тинте с заголовком, телом (`whitespace-pre-line`) и источником. Данные — `scenarioReferences` в [src/app/references.ts](src/app/references.ts): реальные выдержки Положения ЕДДС Кольцово (пп. 5.3–5.6, 6.3–6.4) и Инструкции НГУ Приложение №6 (пожар, подозрительные лица/предметы, видеодетектор «оставлен >5 мин»)
 
 Переиспользуемые примитивы (все в [src/app/components/dashboard-shared.tsx](src/app/components/dashboard-shared.tsx)):
 `Surface`, `PanelSurface` (поддерживает `data-active`), `Eyebrow`, `StageCard`, `DetailReveal` (collapsible), `MetricTile`, `ScenarioProgress`.
 
 ### Стилизация
 
-Tailwind 4 utility-first. Палитра — нейтральные zinc + полупрозрачные `bg-white/60..86` + акцент по риску:
-- thermal: orange/red (`#df6d36`, `#a64a1f`)
-- water: blue (`#3b82c4`, `#245b86`)
-- air: teal (`#1aa39a`, `#0f6d68`)
+Tailwind 4 utility-first. Цвет несёт **семантику функции**, не только тип данных:
 
-Индикаторы критичности — цвет «лампы»: emerald (normal) → amber (watch) → orange (elevated) → red (high/critical).
+- **Информация / справка**: sky (голубой) — i-кнопка, InfoModal, «Последнее событие», активный сигнал
+- **Действия («делай»)**: emerald — чек-лист «Что делать сейчас», прогноз с вмешательством
+- **Запреты / риск роста**: rose — «Чего не делать», прогноз без вмешательства
+- **Критичность**: лестница `emerald → amber → orange → red → red-dark` (см. `criticalityText` и `criticalityAccentBorder` в [icons.ts](src/app/components/icons.ts))
+- **Стихия риска** (в scenario-launcher): thermal=orange, water=sky, air=teal, security=emerald, operational=indigo
 
-Копирайт — полностью на русском.
+Акценты по риск-домену в `riskTheme` (dashboard-sections): thermal orange/red, water blue, air teal, security violet, operational slate.
+
+Копирайт — полностью на русском. `presentText` в [dashboard-sections.tsx](src/app/components/dashboard-sections.tsx) делает терминологические подмены на лету (IAQ → «качество воздуха», SONOFF-модель → описание и т. п.).
 
 ## Команды
 
@@ -197,6 +232,7 @@ npm run preview        # превью production-сборки
 - `workflow-architect` формализует инцидент-флоу аналитика и контракт operator↔display
 - `ux-researcher` ведёт исследование двойной персоны: аналитика и руководителя
 - `design-taste-frontend` применяется только поверх брифа других скиллов
+- **`situational-center-ux`** ([SKILL.md](.agents/skills/situational-center-ux/SKILL.md)) — закреплённый набор UX-паттернов leader-view (статус-баннер, do/don't чек-лист, стрелки прогноза, SigmaAssist, drawer-каталог, цвет-по-семантике, цветные чипы по стихии, стратегия скролла для видеостен). К нему идут вопросы «как разложить новое окно/панель» — там готовый чек-лист из 10 правил
 
 Ни один исполнитель не изобретает доменные факты, которые принадлежат `smart-city-analyst`.
 

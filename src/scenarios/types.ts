@@ -217,6 +217,45 @@ export interface SmartphoneAction {
   action: 'focus' | 'confirm-escalation'
 }
 
+/**
+ * Phase 4.c — тренировочная разметка шага.
+ *
+ * Опциональное поле на `ScenarioStep`. Наполняем для эталонных сценариев
+ * (`edds-mode-change`, `thermal-incident`) в первую очередь; старые сценарии
+ * без `interactiveMeta` продолжают работать в `/operator/*` и `/display/*` без
+ * изменений — их просто не запустить в `/trainer/*` (Phase 4.d).
+ *
+ * Все поля — plain data, без функций и closures: на Phase 4.g структура
+ * мигрирует в YAML/JSON c валидацией через zod.
+ */
+export interface ScenarioStepInteractiveMeta {
+  /** Идентификаторы корректных действий — подмножество `allowedActions`. */
+  expectedActions: string[]
+  /** Полный набор кнопок, доступных оператору на этом шаге. */
+  allowedActions: string[]
+  /** Норматив времени реакции в секундах. */
+  maxDecisionTimeSec: number
+  /** Вклад шага в итоговый балл сценария (>= 0). */
+  weight: number
+  /** Ссылка на пункт Положения — для отчёта аттестации. */
+  clauseRef?: string
+}
+
+/**
+ * Единичное действие тренажёра. Метаданные вроде текста кнопки и
+ * исполняющей службы держим здесь, чтобы `interactiveMeta` на шаге
+ * содержал только идентификаторы.
+ */
+export interface ScenarioActionDefinition {
+  id: string
+  label: string
+  service?: string
+  /** Если true — действие считается противорегламентным, scoring штрафует. */
+  prohibited?: boolean
+  /** Короткое пояснение, почему это действие уместно или противопоказано. */
+  rationale?: string
+}
+
 export interface ScenarioStep {
   id: string
   phase: string
@@ -236,6 +275,8 @@ export interface ScenarioStep {
   actuators: ActuatorSnapshot
   sigmaEffect: string
   autoAdvanceAfterMs?: number
+  /** Phase 4.c — тренажёрная разметка. Опциональна для обратной совместимости. */
+  interactiveMeta?: ScenarioStepInteractiveMeta
 }
 
 export interface ScenarioDefinition {
@@ -252,6 +293,12 @@ export interface ScenarioDefinition {
   sources: SignalSource[]
   smartphoneActions: SmartphoneAction[]
   steps: ScenarioStep[]
+  /**
+   * Phase 4.c — словарь действий тренажёра. Заполняется вместе с
+   * `step.interactiveMeta`; если ни один шаг не имеет `interactiveMeta`,
+   * поле опускается.
+   */
+  actions?: ScenarioActionDefinition[]
 }
 
 export type FocusPanel = 'city' | 'object' | 'incident' | 'tasks' | 'forecast' | null

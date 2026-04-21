@@ -12,6 +12,11 @@ dist
 dist-ssr
 *.local
 
+# Reference projects — не часть этого репозитория, но держим локально для сверки
+# NSK_OpenData_Bot-main: телеграм-бот городских данных с YAML-профилями городов
+# (config/city_profile_*.yaml) — референс для Phase 4.g (регламенты в YAML)
+NSK_OpenData_Bot-main/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

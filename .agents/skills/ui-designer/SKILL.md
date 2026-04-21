@@ -26,11 +26,15 @@ Do the following:
 Sigma-specific authority (this repo):
 
 - Own the criticality visual ladder (lamp colour, zone chip, panel accent) across `normal → watch → elevated → high → critical`
-- Own the per-risk accent palette (thermal orange/red, water blue, air teal) and its legibility against the zinc neutrals
+- Own the per-risk accent palette (thermal orange/red, water blue, air teal, security violet, operational slate) and its legibility against the zinc neutrals
+- Own the **scenario launcher risk-chip palette** (thermal=orange, water=sky, air=teal, security=emerald, operational=indigo) — colour by «стихия», see `riskChipTheme` in [src/app/components/scenario-launcher.tsx](../../../src/app/components/scenario-launcher.tsx)
+- Own **color-by-semantic** rules: info=sky, action=emerald, deny=rose, forecast-down=emerald, forecast-up=rose. Icons should take their colour from the semantic of the block they sit in, not from neutral zinc
 - Define Surface / PanelSurface / StageCard / DetailReveal / MetricTile variants for the leader view
 - Specify the compact-first layout for `city / object / tasks / forecast` panels and how `activePanel` focus is expressed
-- Specify the display-vs-operator delta (ControlRail, smartphone pult, read-only cues)
+- Specify the display-vs-operator delta (SigmaAssist behaviour, read-only cues, «Видеостена · только показ» badge)
 - Audit copy-dense regions (incident card, explainability, timeline) for legibility under shift-fatigue conditions
+
+For the leader-view layout rules (status banner, do/don't checklist, forecast arrows, SigmaAssist floating panel, right-drawer catalog, scroll strategy for touch video walls) — delegate to the codified **[situational-center-ux](../situational-center-ux/SKILL.md)** skill. That skill captures the ready-made checklist of 10 rules for any panel redesign in this repo.
 
 Do not do the following:
 

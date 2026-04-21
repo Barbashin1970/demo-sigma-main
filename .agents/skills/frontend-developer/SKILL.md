@@ -32,6 +32,14 @@ Sigma-specific authority (this repo):
 - Wire new fields through `usePlaybackState` / `usePlaybackActions` and through the `PlaybackSyncMessage` payload in [syncBridge.ts](../../../src/features/scenario-player/syncBridge.ts)
 - Add or change storyboard scene kinds and the tests that pin them ([src/app/storyboard.ts](../../../src/app/storyboard.ts), [src/app/storyboard.test.ts](../../../src/app/storyboard.test.ts))
 - Touch routing and aliases in [src/app/App.tsx](../../../src/app/App.tsx) / [src/scenarios/index.ts](../../../src/scenarios/index.ts) for new scenarios or display modes
+- Own the shell composition: `LeaderDashboard` layout (3-column grid), fixed-position `SigmaAssist` panel, right-drawer `ScenarioLauncher`, `InfoButton` / `InfoModal` wiring to `scenarioReferences` in [src/app/references.ts](../../../src/app/references.ts). Visual rules come from `ui-designer` and `situational-center-ux`; this skill implements them in code.
+- Own the `venues` registry ([src/app/venues.ts](../../../src/app/venues.ts)) and `scenarioReferences` data shape (the content itself — real regulation excerpts — comes from `smart-city-analyst`).
+
+### Phase 4.c onwards — interactive metadata
+
+- Add optional `ScenarioStepInteractiveMeta` on `ScenarioStep` (`expectedActions`, `allowedActions`, `maxDecisionTimeSec`, `weight`, `clauseRef`) without breaking existing scenarios
+- Design any new domain fields (`doNotByRisk`, interactive meta, checklist nodes) so they can later be lifted into external YAML/JSON (Phase 4.g). Keep them as plain records keyed by stable IDs, avoid closures/functions in payloads
+- Prefer pure TS modules for this kind of config data (not `.ts` with logic) — easier to mechanically port to YAML when the hot-reload editor arrives
 
 Do not do the following:
 
@@ -44,6 +52,7 @@ Do not do the following:
 ## Collaboration
 
 - Use `ui-designer` when the work needs visual direction, component behavior rules, design tokens, or UI audits
+- Use `situational-center-ux` when the work needs ready-made patterns for leader/operator panels (status banner, do/don't, forecast arrows, SigmaAssist, drawer catalog, color-by-semantic, scroll strategy for video walls)
 - Use `smart-city-analyst` when the work needs the domain shape of a scenario — triggers, criticality, dispatch, explainability, narrative
 - Use `workflow-architect` when the work requires explicit flow, state, and handoff contracts before implementation
 - Use this skill when the work needs frontend implementation in code

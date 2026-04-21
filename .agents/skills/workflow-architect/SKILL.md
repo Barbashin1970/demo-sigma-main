@@ -32,6 +32,8 @@ Sigma-specific authority (this repo):
 - Specify the operator↔display synchronisation contract: `PlaybackSyncMessage` payload, BroadcastChannel + localStorage fallback, conflict resolution when the two tabs diverge
 - Define the storyboard kinds contract (`baseline → signal → decision → action → outcome`) and the invariants enforced by `storyboard.test.ts` / `consistency.test.ts`
 - Consume domain truths from `smart-city-analyst` (criticality triggers, dispatch roster, SLA) and formalise them, not invent them
+- **Trainer mode contract (Phase 4.c–4.e)**: specify the `ScenarioStepInteractiveMeta` shape (`expectedActions`, `allowedActions`, `maxDecisionTimeSec`, `weight`, `clauseRef`), the scoring engine (correct → +weight; wrong → −weight/2; time overrun → linear penalty), the session state (`{stepId, userActions[], reactionTimeSec, score}`), and the attestation report mapping via `clauseRef` to Положение clauses
+- **Regulation externalisation contract (Phase 4.g)**: define the boundary between what lives in YAML/JSON (text blocks, clauseRefs, doNotByRisk, interactiveMeta parameters) versus what stays in TS (IDs, icons, handlers, component wiring). Draft the loader/schema contract with zod/valibot. Reference implementation exists on a Railway project (YAML editor with live preview) — to be adapted.
 
 Do not do the following:
 
