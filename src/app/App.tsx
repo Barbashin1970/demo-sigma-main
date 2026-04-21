@@ -9,6 +9,7 @@ import {
   LoadingDashboard,
   OperatorDashboard,
 } from './components/dashboard'
+import { RegulationsScreen } from './components/regulations-screen'
 import { TrainerScreen } from './components/trainer-screen'
 
 const SceneRoute = ({ mode }: { mode: DisplayMode }) => {
@@ -49,6 +50,7 @@ export default function App() {
         <Route element={<SceneRoute mode="operator" />} path="/operator/:scenarioId" />
         <Route element={<SceneRoute mode="display" />} path="/display/:scenarioId" />
         <Route element={<TrainerScreen />} path="/trainer/:scenarioId" />
+        <Route element={<RegulationsScreen />} path="/regulations" />
         <Route element={<Navigate replace to="/operator/hospital-fire" />} path="*" />
       </Routes>
     </BrowserRouter>

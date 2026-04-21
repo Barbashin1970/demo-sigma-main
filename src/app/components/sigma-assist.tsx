@@ -1,7 +1,9 @@
 import {
   ArrowClockwise,
+  BookOpen,
   CaretDown,
   ChatCircleText,
+  GraduationCap,
   GridFour,
   Robot,
   Sparkle,
@@ -9,6 +11,7 @@ import {
 } from '@phosphor-icons/react'
 import clsx from 'clsx'
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 
 import type { PlaybackStoreState } from '../../features/scenario-player/playbackStore'
 
@@ -31,11 +34,13 @@ export const SigmaAssist = ({
   onReset,
   onOpenLauncher,
 }: SigmaAssistProps) => {
+  const navigate = useNavigate()
   const [collapsed, setCollapsed] = useState(false)
   const [activeAnswer, setActiveAnswer] = useState<string | null>(null)
 
   const totalSteps = state.scenario.steps.length
   const stepCanAdvance = state.currentStepIndex < totalSteps - 1
+  const trainerAvailable = state.scenario.steps.some((step) => step.interactiveMeta)
 
   const prompts = [
     {
@@ -198,6 +203,39 @@ export const SigmaAssist = ({
             Каталог сценариев
           </button>
         ) : null}
+
+        <div className="grid grid-cols-2 gap-2" data-testid="assist-secondary-nav">
+          <button
+            aria-label={
+              trainerAvailable
+                ? 'Открыть тренажёр для текущего сценария'
+                : 'Для этого сценария тренажёр ещё не наполнен'
+            }
+            className={clsx(
+              'inline-flex items-center justify-center gap-1.5 rounded-[0.9rem] border px-3 py-2 text-[11px] font-semibold transition',
+              trainerAvailable
+                ? 'border-emerald-300 bg-emerald-50 text-emerald-800 hover:border-emerald-500 hover:bg-emerald-100'
+                : 'cursor-not-allowed border-zinc-200 bg-zinc-50 text-zinc-400',
+            )}
+            data-testid="open-trainer"
+            disabled={!trainerAvailable}
+            onClick={() => navigate(`/trainer/${state.selectedScenarioId}`)}
+            type="button"
+          >
+            <GraduationCap size={14} weight="duotone" />
+            Тренажёр
+          </button>
+          <button
+            aria-label="Открыть просмотрщик регламентов"
+            className="inline-flex items-center justify-center gap-1.5 rounded-[0.9rem] border border-sky-300 bg-sky-50 px-3 py-2 text-[11px] font-semibold text-sky-800 transition hover:border-sky-500 hover:bg-sky-100"
+            data-testid="open-regulations"
+            onClick={() => navigate('/regulations')}
+            type="button"
+          >
+            <BookOpen size={14} weight="duotone" />
+            Регламенты
+          </button>
+        </div>
       </div>
     </aside>
   )

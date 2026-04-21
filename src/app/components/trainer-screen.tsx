@@ -22,9 +22,31 @@ import type {
 } from '../../scenarios/types'
 
 import { Eyebrow, ScenarioProgress, Surface } from './dashboard-shared'
+import { FullscreenButton } from './fullscreen-button'
 import { IconGlyph } from './icon-glyph'
 import { criticalityAccentBorder, criticalityText } from './icons'
+import { InfoButton } from './info-button'
 import { InvalidScenarioState } from './dashboard'
+
+const TRAINER_HELP = {
+  title: 'Как работает тренажёр Sigma',
+  body: `1. На каждом шаге вы увидите описание обстановки и список допустимых действий оператора. Выберите одно из них кнопкой.
+
+2. Система оценивает ваш выбор:
+   • Корректное действие → +вес шага
+   • Противорегламентное → −вес/2
+   • Нейтральное допустимое → 0 баллов
+   • Превышение норматива реакции → линейный штраф
+
+3. Кнопка «Подсказка» показывает обоснование правильного действия и ссылку на пункт Положения. Подсказка доступна на каждом шаге без штрафа — используйте её во время обучения.
+
+4. После последнего шага откроется экран «Аттестация»: анкета стажёра (ФИО + роль), разбор по шагам с цветовыми метками и кнопка «Скачать отчёт JSON». Отчёт содержит всё необходимое для фиксации результата в АИС ЦУКС.
+
+5. Порог допуска — 70% от максимального балла сценария. Кнопка «Заново» сбрасывает сессию на первый шаг.
+
+Сейчас тренажёр наполнен для двух сценариев-эталонов: «Пожар в серверной НГУ» и «Смена режима ЕДДС Кольцово». Остальные сценарии доступны в режимах оператора и видеостены через каталог Sigma Assist.`,
+  source: 'Регламент тренажёра Sigma · Phase 4.c–4.e',
+}
 
 interface TrainerScreenProps {
   /** Подсказка в UI (текст) — рассчитываем из rationale ожидаемого действия. */
@@ -109,16 +131,24 @@ const TrainerRunner = ({ scenario, hintsEnabled }: TrainerRunnerProps) => {
 
   return (
     <div className="relative min-h-[100dvh] bg-[#f3f0e8] px-4 py-5 text-zinc-950 md:px-6 lg:px-8">
+      <FullscreenButton />
       <div className="mx-auto max-w-[1280px] space-y-5" data-testid="trainer-shell">
         <header className="flex flex-col gap-3 rounded-[2rem] border border-zinc-200/80 bg-white/90 p-5 md:flex-row md:items-center md:justify-between">
           <div>
             <p className="font-mono text-[10px] uppercase tracking-[0.32em] text-zinc-500">
               Тренажёр · {scenario.scenarioNumber}
             </p>
-            <h1 className="mt-1 text-2xl font-semibold tracking-tight text-zinc-950">
-              {scenario.title}
-            </h1>
+            <div className="mt-1 flex items-center gap-2">
+              <h1 className="text-2xl font-semibold tracking-tight text-zinc-950">
+                {scenario.title}
+              </h1>
+              <InfoButton note={TRAINER_HELP} testId="trainer-help" />
+            </div>
             <p className="mt-1 text-sm text-zinc-600">{scenario.subtitle}</p>
+            <p className="mt-2 text-xs text-sky-700" data-testid="trainer-hint-banner">
+              📘 В конце сценария вы заполните анкету стажёра и сможете скачать отчёт JSON.
+              Нажмите на иконку «i» у заголовка, чтобы прочитать полную инструкцию.
+            </p>
           </div>
           <div className="flex items-center gap-3">
             <div className="rounded-[1rem] border border-sky-200 bg-sky-50 px-3 py-2 text-xs text-sky-800">

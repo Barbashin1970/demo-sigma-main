@@ -182,10 +182,19 @@ interface ScenarioStepInteractiveMeta {
 - [dashboard-sections.tsx](src/app/components/dashboard-sections.tsx) — `doNotByRisk` берётся из `regulations.doNotByRisk`
 - [src/config/regulations.test.ts](src/config/regulations.test.ts) — 10 проверок: валидация текущего конфига, все RiskKind покрыты, zod отбивает неполные/пустые записи
 
+**Что сделано дополнительно (read-only просмотрщик):**
+- Маршрут `/regulations` ([regulations-screen.tsx](src/app/components/regulations-screen.tsx)) — витрина всех регламентов по сценариям + «Чего не делать» по 5 RiskKind
+- i-кнопка «Как устроен просмотрщик» в шапке — инструкция пользователю
+- Кнопки «Скачать YAML» / «Скачать JSON» через Blob — заказчик может получить файл для правки/отправки, не трогая репозиторий
+- Read-only textarea с полным содержимым YAML на странице — чтобы можно было скопировать фрагмент
+- Вход из Sigma Assist — кнопка «📖 Регламенты» (sky-тинт)
+- 4 теста на рендер, help-модалку и оба экспорта
+
 **Что осталось:**
-- [ ] `scenarioTrainerActions.rationale` и `scenarioTrainerMeta.clauseRef` — сейчас в TS ([interactive-meta.ts](src/scenarios/interactive-meta.ts)). Перенести в YAML при подключении редактора (Phase 5), чтобы не править две точки параллельно
+- [ ] Editable-режим в `/regulations`: textarea с записью в localStorage, live-валидация через zod, override-слой (хранить `sigma.regulations.override.yaml`, перекрывать бандл при старте)
+- [ ] `scenarioTrainerActions.rationale` и `scenarioTrainerMeta.clauseRef` — сейчас в TS ([interactive-meta.ts](src/scenarios/interactive-meta.ts)). Перенести в YAML при подключении редактора, чтобы не править две точки параллельно
 - [ ] `recommendations`, `explainability`, `timeline[*].body` в [catalog.ts](src/scenarios/catalog.ts) — самая тяжёлая часть: ~2k строк. Откладываем до реального запроса от заказчика-автора
-- [ ] Studio-textarea редактор в браузере с валидацией zod-схемой и live preview. Референс — [NSK_OpenData_Bot-main/src/static/studio.html](NSK_OpenData_Bot-main/) (textarea + regex + fetch на PUT; минимум зависимостей)
+- [ ] Полноценная Studio по образцу NSK: табы YAML/Дерево/Справка, подсветка, schema-hints (референс — [NSK_OpenData_Bot-main/src/static/studio.html](NSK_OpenData_Bot-main/))
 
 **Цель:** регламенты меняются заказчиком без пересборки. Операционный дежурный обновляет свой playbook → Sigma его подхватывает при следующей загрузке.
 

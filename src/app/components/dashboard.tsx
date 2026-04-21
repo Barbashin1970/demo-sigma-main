@@ -10,6 +10,7 @@ import {
   ScenarioHeader,
   ShellBackground,
 } from './dashboard-sections'
+import { FullscreenButton } from './fullscreen-button'
 import { ScenarioLauncher } from './scenario-launcher'
 import { SigmaAssist } from './sigma-assist'
 
@@ -31,6 +32,7 @@ const LeaderDashboard = ({
   return (
     <div className="relative min-h-[100dvh] overflow-hidden bg-[#f3f0e8] text-zinc-950">
       <ShellBackground />
+      <FullscreenButton />
       <div className="relative mx-auto max-w-[1680px] px-4 py-5 md:px-6 lg:px-8" data-testid="operator-shell">
         <div className="space-y-5">
           <ScenarioHeader interactive={interactive} state={state} />

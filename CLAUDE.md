@@ -53,7 +53,8 @@ src/
 │       ├── info-button.tsx           # i-кнопка в sky-тинте + InfoModal со справкой
 │       ├── icons.ts                  # Phosphor-хаб: risk/criticality/source/zone/task/timeline icons, criticalityText, criticalityAccentBorder
 │       ├── icon-glyph.tsx            # Тонкая обёртка над Phosphor для react-refresh
-│       └── trainer-screen.tsx        # /trainer/:scenarioId — StepPlay + TrainerSummary + подсказки
+│       ├── trainer-screen.tsx        # /trainer/:scenarioId — StepPlay + TrainerSummary + подсказки + инструкция
+│       └── regulations-screen.tsx    # /regulations — просмотрщик YAML + скачать YAML/JSON
 ├── config/
 │   ├── regulations.yaml              # Phase 4.g: источник истины для scenarioReferences + doNotByRisk
 │   └── regulations.ts                # js-yaml + zod loader, валидирует YAML на старте
@@ -81,7 +82,8 @@ src/
 - `/` → `Navigate` на `/operator/hospital-fire`
 - `/operator/:scenarioId` — интерактивный режим с SigmaAssist + транспортом
 - `/display/:scenarioId` — read-only для видеостены, синхронизируется с оператором через BroadcastChannel
-- `/trainer/:scenarioId` — Phase 4.d: тренажёрный режим для сценариев с `interactiveMeta` (сейчас `thermal-incident`, `edds-mode-change`). Свои шаги, свой scoring, свой экран аттестации. Не использует `playbackStore` — локальный session state
+- `/trainer/:scenarioId` — Phase 4.d: тренажёрный режим для сценариев с `interactiveMeta` (сейчас `thermal-incident`, `edds-mode-change`). Свои шаги, свой scoring, свой экран аттестации. Не использует `playbackStore` — локальный session state. В шапке — i-кнопка с инструкцией, sky-баннер про анкету в конце
+- `/regulations` — Phase 4.g read-only витрина: все регламенты по сценариям + «Чего не делать» по RiskKind, скачать YAML/JSON, полный исходный YAML в textarea. Вход из Sigma Assist, кнопка «Регламенты»
 - `*` → fallback на `/operator/hospital-fire`
 
 `SceneRoute` читает `:scenarioId` через `useParams`, прогоняет через `resolveScenarioId` ([src/scenarios/index.ts](src/scenarios/index.ts)) для учёта legacy-алиасов и передаёт в `useScenarioRoute` — хук вызывает `playbackStore.selectScenario()`.

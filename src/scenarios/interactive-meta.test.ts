@@ -91,6 +91,24 @@ describe('Interactive step metadata (Phase 4.c)', () => {
           expect(prohibitedIds.has(expected)).toBe(false)
         }
       })
+
+      it('has a rationale for at least one expected action — ensures the hint is meaningful', () => {
+        const hasRationale = meta.expectedActions.some((id) => {
+          const action = scenario.actions!.find((a) => a.id === id)
+          return Boolean(action?.rationale && action.rationale.trim().length > 0)
+        })
+        expect(hasRationale).toBe(true)
+      })
+
+      it('offers at least two allowed actions — a meaningful choice, not a single button', () => {
+        expect(meta.allowedActions.length).toBeGreaterThanOrEqual(2)
+      })
+
+      it('has at least one non-expected action for contrast (distractor)', () => {
+        const expectedSet = new Set(meta.expectedActions)
+        const distractors = meta.allowedActions.filter((id) => !expectedSet.has(id))
+        expect(distractors.length).toBeGreaterThanOrEqual(1)
+      })
     })
   })
 })
