@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 
 import App from './App'
 
@@ -89,5 +89,67 @@ describe('Trainer route (Phase 4.d)', () => {
 
     expect(screen.queryByTestId('trainer-step')).not.toBeInTheDocument()
     expect(screen.getByTestId('trainer-summary')).toBeInTheDocument()
+  })
+
+  describe('Phase 4.e — attestation report', () => {
+    it('renders the trainee form fields in the summary', async () => {
+      const user = userEvent.setup()
+      window.history.pushState({}, '', '/trainer/edds-mode-change')
+      render(<App />)
+
+      // Run through to summary
+      await user.click(screen.getByTestId('trainer-action-acknowledge-signal'))
+      await user.click(screen.getByTestId('trainer-action-cross-check-sources'))
+      await user.click(screen.getByTestId('trainer-action-report-to-head'))
+      await user.click(screen.getByTestId('trainer-action-transition-to-elevated'))
+
+      expect(screen.getByTestId('trainer-attestee-form')).toBeInTheDocument()
+      expect(screen.getByTestId('trainer-user-name')).toBeInTheDocument()
+      expect(screen.getByTestId('trainer-user-role')).toBeInTheDocument()
+      expect(screen.getByTestId('trainer-export-json')).toBeInTheDocument()
+    })
+
+    it('triggers a JSON blob download when the export button is clicked', async () => {
+      const user = userEvent.setup()
+      const createUrlSpy = vi
+        .spyOn(URL, 'createObjectURL')
+        .mockReturnValue('blob:mock')
+      const revokeUrlSpy = vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => undefined)
+      const clickSpy = vi
+        .spyOn(HTMLAnchorElement.prototype, 'click')
+        .mockImplementation(() => undefined)
+
+      window.history.pushState({}, '', '/trainer/edds-mode-change')
+      render(<App />)
+
+      // Run through to summary
+      await user.click(screen.getByTestId('trainer-action-acknowledge-signal'))
+      await user.click(screen.getByTestId('trainer-action-cross-check-sources'))
+      await user.click(screen.getByTestId('trainer-action-report-to-head'))
+      await user.click(screen.getByTestId('trainer-action-transition-to-elevated'))
+
+      await user.type(screen.getByTestId('trainer-user-name'), 'Иванов')
+      await user.click(screen.getByTestId('trainer-export-json'))
+
+      expect(createUrlSpy).toHaveBeenCalledTimes(1)
+      const blob = createUrlSpy.mock.calls[0][0] as Blob
+      expect(blob.type).toContain('application/json')
+
+      // Verify blob content is valid JSON matching the report shape
+      const text = await blob.text()
+      const report = JSON.parse(text)
+      expect(report.version).toBe('1.0')
+      expect(report.user.name).toBe('Иванов')
+      expect(report.scenario.id).toBe('edds-mode-change')
+      expect(report.stepResults).toHaveLength(4)
+      expect(report.score).toMatchObject({ points: expect.any(Number), maxPoints: expect.any(Number) })
+
+      expect(clickSpy).toHaveBeenCalled()
+      expect(revokeUrlSpy).toHaveBeenCalled()
+
+      createUrlSpy.mockRestore()
+      revokeUrlSpy.mockRestore()
+      clickSpy.mockRestore()
+    })
   })
 })

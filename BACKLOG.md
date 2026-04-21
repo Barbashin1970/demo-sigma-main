@@ -160,12 +160,12 @@ interface ScenarioStepInteractiveMeta {
 - [ ] Сохранение сессии в `localStorage` на случай перезагрузки
 - [ ] Touch-оптимизация (крупные кнопки, swipe между шагами) для видеостены
 
-### 4.e — Аттестационный отчёт
+### 4.e — Аттестационный отчёт (✓ реализовано)
 
-- Финальный экран: пользователь, роль, сценарий, дата, per-step breakdown
-- Мэппинг результата на пункты Положения через `clauseRef`: «п. 8.5.2 — анализ достоверности: выполнено (12 сек)»
-- Итоговый балл и порог допуска к дежурству (70 по умолчанию)
-- Экспорт JSON одной кнопкой, без backend. Шаблон совместим с будущей отправкой в АИС ЦУКС — сама интеграция вне scope Phase 4
+- Финальный экран [trainer-screen.tsx → TrainerSummary](src/app/components/trainer-screen.tsx): анкета стажёра (ФИО + роль из предзаданного списка), per-step breakdown, итоговый балл с порогом (70% от max), JSON-экспорт через Blob
+- `AttestationReport` v1.0 — плоская структура в [trainerSession.ts](src/features/trainer/trainerSession.ts): `{version, user, scenario, generatedAt, startedAt, durationSec, score, stepResults[]}`. Каждый `stepResult` содержит `clauseRef`
+- Имя файла: `sigma-attestation_YYYY-MM-DD_<scenarioId>_<slug>.json`
+- Интеграция с АИС ЦУКС — вне scope Phase 4
 
 ### 4.f — Статичные подсказки (✓ реализовано вместе с 4.d MVP)
 
@@ -173,14 +173,19 @@ interface ScenarioStepInteractiveMeta {
 - Источник: `rationale` ожидаемого действия из `scenarioTrainerActions` + `clauseRef` шага из `scenarioTrainerMeta` — пример: «п. 8.5.2 — первичная фиксация сигнала»
 - AI-агент-наставник = Phase 5 (расширенный Sigma Assist)
 
-### 4.g — Регламенты в YAML/JSON, горячая замена (план)
+### 4.g — Регламенты в YAML/JSON, горячая замена (MVP ✓, продолжение в планах)
 
-Отвязать доменные знания от UI-кода. Сейчас зашиты в TypeScript:
+**Что сделано (MVP):**
+- [src/config/regulations.yaml](src/config/regulations.yaml) — источник истины для `scenarioReferences` и `doNotByRisk`
+- [src/config/regulations.ts](src/config/regulations.ts) — loader на `js-yaml` + `zod`-схема с рантайм-валидацией. Vite `?raw` импорт — YAML попадает в бандл как строка, парсится один раз при инициализации модуля
+- [src/app/references.ts](src/app/references.ts) — стал тонкой обёрткой над загруженным YAML. Публичный API `scenarioReferences` не изменился
+- [dashboard-sections.tsx](src/app/components/dashboard-sections.tsx) — `doNotByRisk` берётся из `regulations.doNotByRisk`
+- [src/config/regulations.test.ts](src/config/regulations.test.ts) — 10 проверок: валидация текущего конфига, все RiskKind покрыты, zod отбивает неполные/пустые записи
 
-- [src/app/references.ts](src/app/references.ts) — `RegulationNote` по scenarioId (выдержки регламентов НГУ/Кольцово)
-- [src/app/components/dashboard-sections.tsx](src/app/components/dashboard-sections.tsx) — `doNotByRisk: Record<RiskKind, string[]>` (запреты по стихии)
-- [src/scenarios/catalog.ts](src/scenarios/catalog.ts) — `recommendations`, `explainability`, timeline-события, narrative
-- (после 4.c) `interactiveMeta` — ожидаемые действия, `clauseRef`, веса шагов
+**Что осталось:**
+- [ ] `scenarioTrainerActions.rationale` и `scenarioTrainerMeta.clauseRef` — сейчас в TS ([interactive-meta.ts](src/scenarios/interactive-meta.ts)). Перенести в YAML при подключении редактора (Phase 5), чтобы не править две точки параллельно
+- [ ] `recommendations`, `explainability`, `timeline[*].body` в [catalog.ts](src/scenarios/catalog.ts) — самая тяжёлая часть: ~2k строк. Откладываем до реального запроса от заказчика-автора
+- [ ] Studio-textarea редактор в браузере с валидацией zod-схемой и live preview. Референс — [NSK_OpenData_Bot-main/src/static/studio.html](NSK_OpenData_Bot-main/) (textarea + regex + fetch на PUT; минимум зависимостей)
 
 **Цель:** регламенты меняются заказчиком без пересборки. Операционный дежурный обновляет свой playbook → Sigma его подхватывает при следующей загрузке.
 

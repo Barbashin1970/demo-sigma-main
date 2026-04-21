@@ -109,3 +109,57 @@ export const findNextInteractiveStep = (
   }
   return null
 }
+
+/**
+ * Phase 4.e — формат аттестационного отчёта.
+ *
+ * Совместим с будущей отправкой в АИС ЦУКС: одна плоская структура, где
+ * каждый результат шага содержит `clauseRef` — ключ для сопоставления с
+ * пунктами Положения о ЕДДС.
+ */
+export interface AttestationReport {
+  /** Версия формата отчёта — чтобы в Phase 5 расширять без ломки парсеров. */
+  version: '1.0'
+  user: {
+    name: string
+    role: string
+  }
+  scenario: {
+    id: string
+    title: string
+    venueId?: string
+  }
+  /** ISO-8601. */
+  generatedAt: string
+  /** ISO-8601. */
+  startedAt: string
+  durationSec: number
+  score: {
+    points: number
+    maxPoints: number
+    threshold: number
+    passed: boolean
+  }
+  stepResults: Array<{
+    stepId: string
+    phase: string
+    scene: string
+    chosenActionId: string
+    chosenActionLabel: string
+    expectedActionIds: string[]
+    reactionTimeSec: number
+    points: number
+    verdict: TrainerStepResult['verdict']
+    clauseRef?: string
+  }>
+}
+
+export const attestationReportFilename = (report: AttestationReport): string => {
+  const date = report.generatedAt.slice(0, 10) // YYYY-MM-DD
+  const slug = report.user.name
+    .toLowerCase()
+    .replace(/[^a-zа-яё0-9]+/gi, '-')
+    .replace(/^-+|-+$/g, '')
+    || 'trainee'
+  return `sigma-attestation_${date}_${report.scenario.id}_${slug}.json`
+}

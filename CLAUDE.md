@@ -54,12 +54,15 @@ src/
 │       ├── icons.ts                  # Phosphor-хаб: risk/criticality/source/zone/task/timeline icons, criticalityText, criticalityAccentBorder
 │       ├── icon-glyph.tsx            # Тонкая обёртка над Phosphor для react-refresh
 │       └── trainer-screen.tsx        # /trainer/:scenarioId — StepPlay + TrainerSummary + подсказки
+├── config/
+│   ├── regulations.yaml              # Phase 4.g: источник истины для scenarioReferences + doNotByRisk
+│   └── regulations.ts                # js-yaml + zod loader, валидирует YAML на старте
 ├── features/scenario-player/
 │   ├── playbackStore.ts              # external store: состояние, шаги, derive-функции, auto-advance
 │   ├── runtime.ts                    # usePlaybackState / usePlaybackActions / useScenarioRoute / usePlaybackSync
 │   └── syncBridge.ts                 # BroadcastChannel + localStorage fallback для operator↔display
 ├── features/trainer/
-│   └── trainerSession.ts             # Phase 4.d: scoreAction / totalPoints / maxPointsForScenario / passThreshold / findNextInteractiveStep
+│   └── trainerSession.ts             # Phase 4.d/4.e: scoreAction / totalPoints / maxPointsForScenario / passThreshold / findNextInteractiveStep / AttestationReport
 ├── scenarios/
 │   ├── types.ts                      # ScenarioId (8), RiskKind (5), InvariantProfile, Criticality, TimelineEvent, ScenarioStep, ScenarioStepInteractiveMeta, ScenarioActionDefinition, ScenarioDefinition
 │   ├── index.ts                      # публичный API + resolveScenarioId (route aliases)
@@ -139,7 +142,21 @@ Action-методы: `start`, `pause`, `reset`, `setRunMode`, `nextStep`, `selec
 
 `ScenarioDefinition.actions?` — словарь `ScenarioActionDefinition` (id, label, service, `prohibited?`, `rationale?`). Используется тренажёром для рендера кнопок и для scoring: `prohibited=true` → штраф `−weight/2`, `rationale` — текст подсказки.
 
-Нет fetch/axios — все данные in-memory, демо полностью детерминировано. Phase 4.g планирует вынести текстовые блоки (`scenarioReferences`, `doNotByRisk`, `scenarioTrainerActions`) в YAML с hot-reload — см. референс в `NSK_OpenData_Bot-main/` (`.gitignore`).
+Нет fetch/axios — все данные in-memory, демо полностью детерминировано.
+
+### Phase 4.g — регламенты как данные
+
+`scenarioReferences` (выдержки регламентов для i-кнопки) и `doNotByRisk` (запреты по стихии) вынесены в [src/config/regulations.yaml](src/config/regulations.yaml). На старте загрузчик [src/config/regulations.ts](src/config/regulations.ts) парсит YAML через `js-yaml`, валидирует через `zod`-схему и экспортирует типизированные объекты. `vite` тянет YAML как `?raw`-строку на этапе сборки; в рантайме fetch не нужен. Невалидный YAML → билд падает.
+
+Осталось перенести в YAML: `scenarioTrainerActions.rationale`, `scenarioTrainerMeta.clauseRef` (связка с редактором в Phase 5) и тяжёлый слой `recommendations / explainability / timeline` из catalog (по запросу заказчика). Референс YAML-редактора — [NSK_OpenData_Bot-main/src/static/studio.html](NSK_OpenData_Bot-main/) (`.gitignore`): textarea + regex-валидация + POST/PUT без тяжёлых зависимостей.
+
+### Phase 4.c/4.d/4.e — тренажёр и аттестация
+
+Опциональное поле `ScenarioStep.interactiveMeta` — тренажёрная разметка (`expectedActions`, `allowedActions`, `maxDecisionTimeSec`, `weight`, `clauseRef`). Наполнена для `thermal-incident` и `edds-mode-change` через словарь в [interactive-meta.ts](src/scenarios/interactive-meta.ts). Сценарии без меты пропускаются тренажёром.
+
+`ScenarioDefinition.actions?` — словарь `ScenarioActionDefinition` (id, label, service, `prohibited?`, `rationale?`). Используется тренажёром для рендера кнопок и для scoring: `prohibited=true` → штраф `−weight/2`, `rationale` — текст подсказки.
+
+Scoring в [trainerSession.ts](src/features/trainer/trainerSession.ts) — чистые функции: `scoreAction`, `totalPoints`, `maxPointsForScenario`, `passThreshold` (70% от max), `findNextInteractiveStep`. Финальный экран формирует `AttestationReport` v1.0 и экспортирует JSON через Blob + `<a download>`.
 
 ## UI-слой
 

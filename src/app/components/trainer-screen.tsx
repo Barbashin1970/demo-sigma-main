@@ -1,15 +1,17 @@
-import { ArrowClockwise, CheckCircle, Prohibit, Sparkle, Warning } from '@phosphor-icons/react'
+import { ArrowClockwise, CheckCircle, DownloadSimple, Prohibit, Sparkle, Warning } from '@phosphor-icons/react'
 import clsx from 'clsx'
 import { useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 
 import {
+  attestationReportFilename,
   findNextInteractiveStep,
   initialTrainerSession,
   maxPointsForScenario,
   passThreshold,
   scoreAction,
   totalPoints,
+  type AttestationReport,
   type TrainerSessionState,
 } from '../../features/trainer/trainerSession'
 import { resolveScenarioId, scenarios } from '../../scenarios'
@@ -282,6 +284,61 @@ const verdictCopy: Record<
   skipped: { label: 'Пропущено', icon: Warning, tone: 'text-amber-700' },
 }
 
+const ROLE_OPTIONS = [
+  'Оперативный дежурный ЕДДС',
+  'Старший оперативный дежурный ЕДДС',
+  'Оператор «112»',
+  'Диспетчер ИТ-службы НГУ',
+  'Охрана НГУ',
+] as const
+
+const buildReport = ({
+  scenario,
+  session,
+  actions,
+  maxPoints,
+  threshold,
+  userName,
+  userRole,
+  generatedAt,
+}: {
+  scenario: ScenarioDefinition
+  session: TrainerSessionState
+  actions: ScenarioActionDefinition[]
+  maxPoints: number
+  threshold: number
+  userName: string
+  userRole: string
+  generatedAt: Date
+}): AttestationReport => {
+  const points = Number(totalPoints(session.results).toFixed(2))
+  return {
+    version: '1.0',
+    user: { name: userName, role: userRole },
+    scenario: { id: scenario.id, title: scenario.title, venueId: scenario.venueId },
+    generatedAt: generatedAt.toISOString(),
+    startedAt: new Date(session.startedAt).toISOString(),
+    durationSec: Number(((generatedAt.getTime() - session.startedAt) / 1000).toFixed(1)),
+    score: { points, maxPoints, threshold, passed: points >= threshold },
+    stepResults: session.results.map((result) => {
+      const step = scenario.steps.find((s) => s.id === result.stepId)
+      const action = actions.find((a) => a.id === result.chosenActionId)
+      return {
+        stepId: result.stepId,
+        phase: step?.phase ?? '',
+        scene: step?.scene ?? '',
+        chosenActionId: result.chosenActionId,
+        chosenActionLabel: action?.label ?? result.chosenActionId,
+        expectedActionIds: step?.interactiveMeta?.expectedActions ?? [],
+        reactionTimeSec: Number(result.reactionTimeSec.toFixed(2)),
+        points: Number(result.points.toFixed(2)),
+        verdict: result.verdict,
+        clauseRef: step?.interactiveMeta?.clauseRef,
+      }
+    }),
+  }
+}
+
 const TrainerSummary = ({
   scenario,
   session,
@@ -299,6 +356,32 @@ const TrainerSummary = ({
 }) => {
   const score = Math.round(totalPoints(session.results))
   const passed = score >= threshold
+  const [userName, setUserName] = useState('')
+  const [userRole, setUserRole] = useState<string>(ROLE_OPTIONS[0])
+
+  const handleExport = () => {
+    const report = buildReport({
+      scenario,
+      session,
+      actions,
+      maxPoints,
+      threshold,
+      userName: userName.trim() || 'Стажёр',
+      userRole,
+      generatedAt: new Date(),
+    })
+    const blob = new Blob([JSON.stringify(report, null, 2)], {
+      type: 'application/json;charset=utf-8',
+    })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = attestationReportFilename(report)
+    document.body.appendChild(link)
+    link.click()
+    link.remove()
+    URL.revokeObjectURL(url)
+  }
 
   return (
     <Surface className="space-y-5" data-testid="trainer-summary">
@@ -311,6 +394,46 @@ const TrainerSummary = ({
           Набрано {score} из {maxPoints} баллов. Порог — {threshold}. Разбор по шагам ниже.
         </p>
       </header>
+
+      <section
+        aria-label="Анкета стажёра"
+        className="rounded-[1.1rem] border border-sky-200 bg-sky-50/70 p-4"
+        data-testid="trainer-attestee-form"
+      >
+        <Eyebrow>Анкета стажёра</Eyebrow>
+        <div className="mt-3 grid gap-3 md:grid-cols-2">
+          <label className="text-xs text-zinc-700">
+            <span className="font-mono uppercase tracking-[0.22em] text-zinc-500">ФИО</span>
+            <input
+              className="mt-1 w-full rounded-[0.8rem] border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-950 focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-100"
+              data-testid="trainer-user-name"
+              onChange={(event) => setUserName(event.target.value)}
+              placeholder="Иванов Иван Иванович"
+              type="text"
+              value={userName}
+            />
+          </label>
+          <label className="text-xs text-zinc-700">
+            <span className="font-mono uppercase tracking-[0.22em] text-zinc-500">Роль</span>
+            <select
+              className="mt-1 w-full rounded-[0.8rem] border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-950 focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-100"
+              data-testid="trainer-user-role"
+              onChange={(event) => setUserRole(event.target.value)}
+              value={userRole}
+            >
+              {ROLE_OPTIONS.map((role) => (
+                <option key={role} value={role}>
+                  {role}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
+        <p className="mt-2 text-[11px] text-zinc-500">
+          Отчёт содержит: ФИО, роль, сценарий, дату, разбор по шагам с ссылками на пункты Положения.
+          Формат совместим с будущей отправкой в АИС ЦУКС.
+        </p>
+      </section>
 
       <ol className="space-y-2">
         {session.results.map((result) => {
@@ -366,6 +489,16 @@ const TrainerSummary = ({
         >
           <ArrowClockwise size={14} weight="bold" />
           Пройти ещё раз
+        </button>
+        <button
+          aria-label="Скачать аттестационный отчёт в формате JSON"
+          className="inline-flex items-center gap-2 rounded-full border border-sky-500 bg-sky-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-sky-600"
+          data-testid="trainer-export-json"
+          onClick={handleExport}
+          type="button"
+        >
+          <DownloadSimple size={14} weight="bold" />
+          Скачать отчёт JSON
         </button>
       </div>
     </Surface>

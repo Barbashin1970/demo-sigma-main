@@ -11,6 +11,7 @@ import {
 } from '@phosphor-icons/react'
 import clsx from 'clsx'
 
+import { regulations } from '../../config/regulations'
 import type {
   Criticality,
   PlaybackStatus,
@@ -191,27 +192,16 @@ const criticalityRowTint: Record<Criticality, string> = {
   critical: 'bg-red-100/80',
 }
 
+/**
+ * Phase 4.g — «Чего не делать» приходит из YAML (src/config/regulations.yaml).
+ * Ключи совпадают с `RiskKind`. Пустой массив для риска — секция скрывается.
+ */
 const doNotByRisk: Record<RiskKind, string[]> = {
-  thermal: [
-    'Не открывать двери в горящее помещение без защиты — приток воздуха усиливает пламя',
-    'Не отключать питание серверной до подтверждения старшего ИТ-инженера',
-  ],
-  water: [
-    'Не закрывать стояк автоматически без подтверждения обходчика',
-    'Не допускать персонал в затопленную зону до проверки СКУД и электрики',
-  ],
-  air: [
-    'Не выпускать пешеходов на маршруты без подтверждения двух источников',
-    'Не запускать приточную вентиляцию до проверки фильтров и направления ветра',
-  ],
-  security: [
-    'Не применять силу до прибытия группы быстрого реагирования',
-    'Не отменять удержание замка без старшего по безопасности кампуса',
-  ],
-  operational: [
-    'Не переводить службу в режим ЧС без распоряжения главы поселка',
-    'Не эскалировать на город до подтверждения вторым независимым источником',
-  ],
+  thermal: regulations.doNotByRisk.thermal ?? [],
+  water: regulations.doNotByRisk.water ?? [],
+  air: regulations.doNotByRisk.air ?? [],
+  security: regulations.doNotByRisk.security ?? [],
+  operational: regulations.doNotByRisk.operational ?? [],
 }
 
 const presentText = (value: string) =>

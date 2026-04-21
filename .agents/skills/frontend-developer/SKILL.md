@@ -35,11 +35,19 @@ Sigma-specific authority (this repo):
 - Own the shell composition: `LeaderDashboard` layout (3-column grid), fixed-position `SigmaAssist` panel, right-drawer `ScenarioLauncher`, `InfoButton` / `InfoModal` wiring to `scenarioReferences` in [src/app/references.ts](../../../src/app/references.ts). Visual rules come from `ui-designer` and `situational-center-ux`; this skill implements them in code.
 - Own the `venues` registry ([src/app/venues.ts](../../../src/app/venues.ts)) and `scenarioReferences` data shape (the content itself — real regulation excerpts — comes from `smart-city-analyst`).
 
-### Phase 4.c onwards — interactive metadata
+### Phase 4.c–4.e — interactive metadata + trainer + attestation
 
-- Add optional `ScenarioStepInteractiveMeta` on `ScenarioStep` (`expectedActions`, `allowedActions`, `maxDecisionTimeSec`, `weight`, `clauseRef`) without breaking existing scenarios
-- Design any new domain fields (`doNotByRisk`, interactive meta, checklist nodes) so they can later be lifted into external YAML/JSON (Phase 4.g). Keep them as plain records keyed by stable IDs, avoid closures/functions in payloads
-- Prefer pure TS modules for this kind of config data (not `.ts` with logic) — easier to mechanically port to YAML when the hot-reload editor arrives
+- `ScenarioStepInteractiveMeta` (`expectedActions`, `allowedActions`, `maxDecisionTimeSec`, `weight`, `clauseRef`) живёт в [interactive-meta.ts](../../../src/scenarios/interactive-meta.ts). Поле опциональное — старые сценарии не ломаются
+- Trainer-маршрут `/trainer/:scenarioId` + scoring — [trainer-screen.tsx](../../../src/app/components/trainer-screen.tsx), [trainerSession.ts](../../../src/features/trainer/trainerSession.ts). Session state — локальный `useState`, без `playbackStore`
+- `AttestationReport` v1.0 — плоская структура для будущего экспорта в АИС ЦУКС. JSON-экспорт через Blob + программный клик по `<a download>`
+
+### Phase 4.g — границы YAML и кода
+
+- YAML — только декларативные **данные**: тексты регламентов, запреты по стихии, `clauseRef`-ссылки. Схема — zod в [src/config/regulations.ts](../../../src/config/regulations.ts)
+- TS — идентификаторы (scenarioId, RiskKind, actionId), иконки, handler-ы, layout-компоненты, scoring-функции
+- Новые текстовые поля добавляются в YAML-схему первыми (или одновременно с TS), чтобы не заставлять заказчика-автора раз за разом ждать релиза
+- При добавлении нового поля в `RegulationsFile`: обновить zod, обновить YAML, обновить потребителя в TS. Тест [regulations.test.ts](../../../src/config/regulations.test.ts) пинит валидность и покрытие RiskKind
+- Vite `?raw`-импорт работает и в тестах (Vitest использует тот же transform pipeline) — отдельных фикстур не нужно
 
 Do not do the following:
 
