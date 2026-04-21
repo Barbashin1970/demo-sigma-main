@@ -1,6 +1,6 @@
 ---
 name: frontend-developer
-description: Use when Codex needs to implement or improve frontend product behavior in code: pages, components, routes, client state, API-connected UI flows, accessibility, responsive behavior, performance, or frontend tests. Do not use for backend-only work, visual-system ownership, product strategy, or copywriting-heavy tasks.
+description: Use when Codex needs to implement or improve frontend product behavior in code: pages, components, routes, client state, API-connected UI flows, accessibility, responsive behavior, performance, or frontend tests. In the Sigma repo this also covers scenario catalog edits, playbackStore derivations, BroadcastChannel sync bridge, storyboard kinds, and leader-view composition. Do not use for backend-only work, visual-system ownership, product strategy, or domain scenario authoring.
 ---
 
 # Frontend Developer
@@ -25,18 +25,29 @@ Do the following:
 - Improve accessibility, responsiveness, performance, and maintainability
 - Add focused tests for the implemented behavior
 
+Sigma-specific authority (this repo):
+
+- Edit the scenario catalog in [src/scenarios/catalog.ts](../../../src/scenarios/catalog.ts) when the data shape is stable and the change is mechanical (new snapshot field, additional source, new task). Semantic authoring of incidents and narrative goes to `smart-city-analyst`.
+- Extend `PlaybackStoreState`, derive functions (`deriveIncident` / `deriveTasks` / `deriveTimeline`) and action methods in [src/features/scenario-player/playbackStore.ts](../../../src/features/scenario-player/playbackStore.ts)
+- Wire new fields through `usePlaybackState` / `usePlaybackActions` and through the `PlaybackSyncMessage` payload in [syncBridge.ts](../../../src/features/scenario-player/syncBridge.ts)
+- Add or change storyboard scene kinds and the tests that pin them ([src/app/storyboard.ts](../../../src/app/storyboard.ts), [src/app/storyboard.test.ts](../../../src/app/storyboard.test.ts))
+- Touch routing and aliases in [src/app/App.tsx](../../../src/app/App.tsx) / [src/scenarios/index.ts](../../../src/scenarios/index.ts) for new scenarios or display modes
+
 Do not do the following:
 
 - Take ownership of the visual system instead of the `ui-designer` skill
+- Author the domain semantics of a scenario (narrative, criticality ladder, service dispatch, explainability copy) — that is `smart-city-analyst`
 - Drift into backend-only implementation unless the frontend task requires a narrow integration touchpoint
 - Lead product strategy or experimentation planning
 - Spend most of the output on marketing copy or content design
 
-## Collaboration with UI Designer
+## Collaboration
 
 - Use `ui-designer` when the work needs visual direction, component behavior rules, design tokens, or UI audits
+- Use `smart-city-analyst` when the work needs the domain shape of a scenario — triggers, criticality, dispatch, explainability, narrative
+- Use `workflow-architect` when the work requires explicit flow, state, and handoff contracts before implementation
 - Use this skill when the work needs frontend implementation in code
-- If the design handoff is incomplete, call out the missing decision and proceed only with the parts that are safe to implement
+- If design or domain handoff is incomplete, call out the missing decision and proceed only with parts that are safe to implement
 
 ## Workflow
 

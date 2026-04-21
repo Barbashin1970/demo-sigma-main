@@ -1,6 +1,6 @@
 ---
 name: ui-designer
-description: Use when Codex needs to design or audit screens, flows, component systems, design tokens, responsive behavior, accessibility rules, or developer-ready UI handoff. Do not use for backend-only work, product strategy, analytics, or copywriting-heavy tasks.
+description: Use when Codex needs to design or audit screens, flows, component systems, design tokens, responsive behavior, accessibility rules, or developer-ready UI handoff. In the Sigma repo this includes the leader-view visual system: criticality lamps, risk palettes (thermal/water/air), compact-first summary panels, explainability and forecast reveals, and the operator/display mode split. Do not use for backend-only work, product strategy, analytics, or domain scenario authoring.
 ---
 
 # UI Designer
@@ -23,9 +23,19 @@ Do the following:
 - Audit interfaces for consistency, responsiveness, accessibility, and handoff gaps
 - Translate ambiguous UI requests into explicit design decisions that engineers can implement
 
+Sigma-specific authority (this repo):
+
+- Own the criticality visual ladder (lamp colour, zone chip, panel accent) across `normal → watch → elevated → high → critical`
+- Own the per-risk accent palette (thermal orange/red, water blue, air teal) and its legibility against the zinc neutrals
+- Define Surface / PanelSurface / StageCard / DetailReveal / MetricTile variants for the leader view
+- Specify the compact-first layout for `city / object / tasks / forecast` panels and how `activePanel` focus is expressed
+- Specify the display-vs-operator delta (ControlRail, smartphone pult, read-only cues)
+- Audit copy-dense regions (incident card, explainability, timeline) for legibility under shift-fatigue conditions
+
 Do not do the following:
 
 - Absorb backend-only implementation work
+- Author scenario semantics (criticality triggers, dispatch, narrative) — that is `smart-city-analyst`
 - Lead product strategy, analytics, or experimentation planning
 - Spend most of the output on copywriting or marketing language
 

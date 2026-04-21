@@ -178,9 +178,27 @@ npm run preview        # превью production-сборки
 7. **Межвкладочная синхронизация** — через `BroadcastChannel`, минимальный payload, fallback на `localStorage`.
 8. **Storyboard kinds** — каждому шагу жёстко сопоставлен `StoryboardSceneKind` (`baseline | signal | decision | action | outcome`), консистентность проверяется тестами.
 
-## Существующий гайд AGENTS
+## Агенты и скиллы
 
-В репозитории уже есть [AGENTS.md](AGENTS.md) с ролями скиллов (ui-designer, frontend-developer, workflow-architect, ux-researcher) и правилами структуры `.agents/skills/`. Соблюдай его при изменениях в [.agents/](.agents/).
+В репозитории — пять ролевых скиллов в [.agents/skills/](.agents/skills/). Правила структуры и границы ролей — в [AGENTS.md](AGENTS.md). Соблюдай их при изменениях в `.agents/`.
+
+Домейн-владельцем продукта выступает **[smart-city-analyst](.agents/skills/smart-city-analyst/SKILL.md)** — роль аналитика ситуационного центра, то есть того самого пользователя, которого Sigma автоматизирует. К нему идут все решения про:
+
+- лестницу критичности (`normal → watch → elevated → high → critical`) и её триггеры
+- матрицу служб, задач, SLA и эскалаций
+- инвентарь источников сигналов (sensor / external / manual / virtual / actuator)
+- explainability, forecast и сценарный narrative
+- регистр и tone of voice русскоязычного UI (см. [copy-voice.md](.agents/skills/smart-city-analyst/references/copy-voice.md))
+
+Исполняющие роли (`ui-designer`, `frontend-developer`, `workflow-architect`, `ux-researcher`) в этом репо расширены:
+
+- `frontend-developer` получил явное право править [catalog.ts](src/scenarios/catalog.ts), derive-функции playbackStore, sync bridge и storyboard kinds
+- `ui-designer` владеет криталити-лестницей (лампы, палитра по риску) и раскладкой compact-first leader view
+- `workflow-architect` формализует инцидент-флоу аналитика и контракт operator↔display
+- `ux-researcher` ведёт исследование двойной персоны: аналитика и руководителя
+- `design-taste-frontend` применяется только поверх брифа других скиллов
+
+Ни один исполнитель не изобретает доменные факты, которые принадлежат `smart-city-analyst`.
 
 ## Деплой
 

@@ -1,6 +1,6 @@
 ---
 name: workflow-architect
-description: Use when Codex needs explicit workflow, state, branch, failure-path, or handoff definitions before or alongside implementation. Do not use for UI design, user research, or production code implementation.
+description: Use when Codex needs explicit workflow, state, branch, failure-path, or handoff definitions before or alongside implementation. In the Sigma repo this includes the analyst incident-response flow, escalation matrix across services, actuator feedback loops, and operator↔display synchronisation contracts. Do not use for UI design, user research, or production code implementation.
 ---
 
 # Workflow Architect
@@ -24,9 +24,19 @@ Do the following:
 - Specify handoff contracts between UI, frontend, backend, services, or operators
 - Surface missing workflow definitions that would create ambiguity during implementation or QA
 
+Sigma-specific authority (this repo):
+
+- Formalise the analyst incident-response flow: signal intake → triage → dispatch → escalation → closure, including retry and rollback branches
+- Define the escalation matrix across services (object duty, city service, МЧС, leadership, public channels), the channel per hop and the acceptance condition
+- Specify actuator feedback loops — what counts as "локализовано", "подтверждено", "штатный режим"
+- Specify the operator↔display synchronisation contract: `PlaybackSyncMessage` payload, BroadcastChannel + localStorage fallback, conflict resolution when the two tabs diverge
+- Define the storyboard kinds contract (`baseline → signal → decision → action → outcome`) and the invariants enforced by `storyboard.test.ts` / `consistency.test.ts`
+- Consume domain truths from `smart-city-analyst` (criticality triggers, dispatch roster, SLA) and formalise them, not invent them
+
 Do not do the following:
 
 - Take ownership of UI design decisions instead of `ui-designer`
+- Invent domain facts that belong to `smart-city-analyst` (invent fresh escalation paths, fabricate service SLAs)
 - Present user research as if it were workflow definition instead of using `ux-researcher`
 - Write production implementation instead of using `frontend-developer` or another implementation role
 
