@@ -1,4 +1,4 @@
-import { BrowserRouter, Navigate, Route, Routes, useNavigate, useParams } from 'react-router-dom'
+import { BrowserRouter, Navigate, Route, Routes, useParams } from 'react-router-dom'
 
 import { resolveScenarioId } from '../scenarios'
 import type { DisplayMode } from '../scenarios'
@@ -12,7 +12,6 @@ import {
 
 const SceneRoute = ({ mode }: { mode: DisplayMode }) => {
   const { scenarioId } = useParams()
-  const navigate = useNavigate()
   const state = usePlaybackState()
   const actions = usePlaybackActions()
   const resolvedScenarioId = resolveScenarioId(scenarioId)
@@ -22,10 +21,6 @@ const SceneRoute = ({ mode }: { mode: DisplayMode }) => {
 
   if (!resolvedScenarioId) {
     return <InvalidScenarioState />
-  }
-
-  const handleScenarioSelect = (nextScenarioId: typeof state.selectedScenarioId) => {
-    navigate(`/${mode}/${nextScenarioId}`)
   }
 
   if (state.selectedScenarioId !== resolvedScenarioId) {
@@ -39,7 +34,6 @@ const SceneRoute = ({ mode }: { mode: DisplayMode }) => {
   return (
     <OperatorDashboard
       onReset={actions.reset}
-      onScenarioSelect={handleScenarioSelect}
       onStep={actions.nextStep}
       state={state}
     />

@@ -23,17 +23,13 @@ describe('App routes', () => {
       }),
     ).toBeInTheDocument()
 
-    expect(screen.getAllByTestId('scenario-tabs').at(-1)).toBeInTheDocument()
+    expect(screen.getByTestId('open-launcher')).toBeInTheDocument()
+    expect(screen.queryByTestId('scenario-tabs')).not.toBeInTheDocument()
     expect(screen.queryByTestId('city-summary')).not.toBeInTheDocument()
     expect(screen.queryByTestId('object-summary')).not.toBeInTheDocument()
     expect(screen.getAllByTestId('decision-summary').at(-1)).toBeInTheDocument()
     expect(screen.getAllByTestId('forecast-summary').at(-1)).toBeInTheDocument()
     expect(screen.queryByText(/смартфонный пульт руководителя/i)).not.toBeInTheDocument()
-    for (const scenario of Object.values(scenarios)) {
-      expect(
-        screen.getByRole('button', { name: new RegExp(scenario.tabLabel, 'i') }),
-      ).toBeInTheDocument()
-    }
     expect(screen.queryByRole('button', { name: /^термический инцидент$/i })).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /запуск/i })).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /пауза/i })).not.toBeInTheDocument()
@@ -58,7 +54,7 @@ describe('App routes', () => {
     }
   })
 
-  it('resets event feed and progress when switching scenario tabs', async () => {
+  it('resets event feed and progress when switching scenario via launcher', async () => {
     const user = userEvent.setup()
 
     window.history.pushState({}, '', '/operator/thermal-incident')
@@ -73,7 +69,15 @@ describe('App routes', () => {
     expect(within(thermalShell!).getByText(/этап 2 из 5/i)).toBeInTheDocument()
     expect(within(thermalShell!).getByText(/рост температуры в электрощитовой/i)).toBeInTheDocument()
 
-    await user.click(screen.getAllByRole('button', { name: /прорыв теплового ввода/i })[0])
+    // Open launcher modal, apply filters, select city-clinic card
+    await user.click(screen.getByTestId('open-launcher'))
+    await user.click(screen.getByTestId('launcher-apply'))
+    const clinicCard = screen.getByTestId('venue-card-city-clinic')
+    await user.click(
+      within(clinicCard).getByRole('button', {
+        name: /открыть сценарий в режиме оператора/i,
+      }),
+    )
 
     await screen.findByRole('heading', { name: /прорыв теплового ввода/i })
 
@@ -99,16 +103,4 @@ describe('App routes', () => {
     expect(screen.queryByText(/медицинский объект работает без отклонений, внешняя инфраструктура стабильна/i)).not.toBeInTheDocument()
   })
 
-  it('renders scenario tabs without risk badges', () => {
-    window.history.pushState({}, '', '/operator/hospital-fire')
-
-    render(<App />)
-
-    const scenarioTabs = screen.getAllByTestId('scenario-tabs').at(-1)
-
-    expect(scenarioTabs).toBeDefined()
-    expect(within(scenarioTabs!).queryByText(/термический риск/i)).not.toBeInTheDocument()
-    expect(within(scenarioTabs!).queryByText(/водяной риск/i)).not.toBeInTheDocument()
-    expect(within(scenarioTabs!).queryByText(/воздушная опасность/i)).not.toBeInTheDocument()
-  })
 })

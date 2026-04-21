@@ -2,22 +2,23 @@ import {
   ArrowClockwise,
   Buildings,
   ChartLineUp,
+  GridFour,
+  Monitor,
   ShieldCheck,
   Steps,
 } from '@phosphor-icons/react'
 import clsx from 'clsx'
 import type { ReactNode } from 'react'
 
-import { scenarioIds, scenarios as scenarioDefinitions } from '../../scenarios'
 import type {
   Criticality,
   PlaybackStatus,
   RiskKind,
-  ScenarioId,
   SignalSource,
 } from '../../scenarios'
 import type { PlaybackStoreState } from '../../features/scenario-player/playbackStore'
 import { resolveFocus } from '../focus-resolver'
+import { scenarioReferences } from '../references'
 import { storyboardSceneCopy } from '../storyboard'
 import {
   DetailReveal,
@@ -29,6 +30,7 @@ import {
   Surface,
 } from './dashboard-shared'
 import { IconGlyph } from './icon-glyph'
+import { InfoButton } from './info-button'
 import {
   criticalityAccentBorder,
   criticalityIcon,
@@ -200,47 +202,6 @@ const StatusPill = ({
   </div>
 )
 
-const ScenarioTabs = ({
-  selectedScenarioId,
-  onSelect,
-}: {
-  selectedScenarioId: ScenarioId
-  onSelect: (scenarioId: ScenarioId) => void
-}) => (
-  <div className="grid gap-3" data-testid="scenario-tabs">
-    {scenarioIds.map((scenarioId) => {
-      const scenario = scenarioDefinitions[scenarioId]
-      const active = selectedScenarioId === scenarioId
-      const TabIcon = scenarioTabIcon[scenarioId]
-
-      return (
-        <button
-          key={scenarioId}
-          className={clsx(
-            'flex w-full items-center gap-3 rounded-[1.35rem] border px-4 py-4 text-left transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]',
-            active ? 'border-zinc-950 bg-zinc-950 text-zinc-50' : 'border-zinc-200/90 bg-zinc-50/80 text-zinc-900 hover:border-zinc-400',
-          )}
-          onClick={() => onSelect(scenarioId)}
-          type="button"
-        >
-          <span
-            aria-hidden
-            className={clsx(
-              'inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-[0.9rem]',
-              active ? 'bg-white/10 text-zinc-50' : 'bg-white text-zinc-700',
-            )}
-          >
-            <IconGlyph of={TabIcon} size={18} weight={active ? 'fill' : 'duotone'} />
-          </span>
-          <div className="min-w-0">
-            <p className="text-sm font-semibold leading-snug">{presentText(scenario.tabLabel)}</p>
-          </div>
-        </button>
-      )
-    })}
-  </div>
-)
-
 const TransportButton = ({
   label,
   icon,
@@ -293,14 +254,12 @@ const TransportControls = ({
 export const ControlRail = ({
   state,
   interactive,
-  onScenarioSelect,
   onStep,
   onReset,
   onOpenLauncher,
 }: {
   state: PlaybackStoreState
   interactive: boolean
-  onScenarioSelect?: (id: ScenarioId) => void
   onStep?: () => void
   onReset?: () => void
   onOpenLauncher?: () => void
@@ -324,23 +283,28 @@ export const ControlRail = ({
       )}
 
       <div>
-        <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2">
           <Eyebrow>Обстановка</Eyebrow>
-          {onOpenLauncher ? (
-            <button
-              aria-label="Открыть каталог сценариев"
-              className="inline-flex items-center gap-1.5 rounded-full border border-zinc-200/90 bg-white/90 px-3 py-1 text-[10px] font-medium uppercase tracking-[0.22em] text-zinc-600 transition hover:border-zinc-400 hover:text-zinc-900"
-              data-testid="open-launcher"
-              onClick={onOpenLauncher}
-              type="button"
-            >
-              Каталог
-            </button>
-          ) : null}
+          <InfoButton
+            note={scenarioReferences[state.selectedScenarioId]?.situation}
+            testId="info-situation"
+          />
         </div>
-        <div className="mt-4">
-          <ScenarioTabs onSelect={onScenarioSelect ?? (() => undefined)} selectedScenarioId={state.selectedScenarioId} />
-        </div>
+        <p className="mt-2 text-sm leading-snug text-zinc-600">
+          Текущий: {presentText(state.scenario.tabLabel)}
+        </p>
+        {onOpenLauncher ? (
+          <button
+            aria-label="Открыть каталог сценариев"
+            className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-[1.1rem] border border-zinc-950 bg-zinc-950 px-4 py-3 text-sm font-semibold text-zinc-50 shadow-[0_12px_24px_-18px_rgba(15,23,42,0.5)] transition hover:bg-zinc-800"
+            data-testid="open-launcher"
+            onClick={onOpenLauncher}
+            type="button"
+          >
+            <GridFour size={18} weight="duotone" />
+            Каталог сценариев
+          </button>
+        ) : null}
       </div>
 
       <div>
@@ -598,7 +562,13 @@ export const IncidentPanel = ({ state }: { state: PlaybackStoreState }) => {
     >
       <div className="flex items-start justify-between gap-3">
         <div>
-          <Eyebrow>Рекомендуемые действия</Eyebrow>
+          <div className="flex items-center gap-2">
+            <Eyebrow>Рекомендуемые действия</Eyebrow>
+            <InfoButton
+              note={scenarioReferences[state.selectedScenarioId]?.actions}
+              testId="info-actions"
+            />
+          </div>
           <h2 className="mt-2 text-xl font-semibold tracking-tight">Действия руководителя</h2>
         </div>
         <span
@@ -783,7 +753,13 @@ export const ForecastPanel = ({ state }: { state: PlaybackStoreState }) => {
   )
 }
 
-export const ScenarioHeader = ({ state }: { state: PlaybackStoreState }) => {
+export const ScenarioHeader = ({
+  state,
+  interactive = true,
+}: {
+  state: PlaybackStoreState
+  interactive?: boolean
+}) => {
   const sceneCopy = storyboardSceneCopy[state.currentStep.scene]
   const theme = riskTheme[state.incident.riskKind]
   const sceneToTimelineType: Record<typeof state.currentStep.scene, 'signal' | 'event' | 'decision' | 'action' | 'forecast'> = {
@@ -805,6 +781,16 @@ export const ScenarioHeader = ({ state }: { state: PlaybackStoreState }) => {
               <IconGlyph of={SceneIcon} size={14} weight="duotone" />
               {presentText(sceneCopy.eyebrow)}
             </span>
+            {!interactive ? (
+              <span
+                aria-label="Режим видеостены — только показ, управление идёт с оператора через синхронизацию"
+                className="inline-flex items-center gap-1.5 rounded-full border border-zinc-300 bg-white/90 px-3 py-1.5 text-[10px] font-medium uppercase tracking-[0.22em] text-zinc-700"
+                data-testid="display-mode-badge"
+              >
+                <Monitor size={12} weight="fill" />
+                Видеостена · только показ
+              </span>
+            ) : null}
           </div>
           <h1 className="mt-4 text-3xl font-semibold tracking-tight text-zinc-950 md:text-4xl">{presentText(state.scenario.headline)}</h1>
           <p className="mt-4 max-w-[72ch] text-sm leading-relaxed text-zinc-600">{presentText(state.scenario.subtitle)}</p>

@@ -97,12 +97,17 @@ Grounding: первый сценарий, где пользователь — н
 - Архитектура: вариант A (ScenarioKind + Instance) откладываем в Phase 5; дублирование (вариант C) отклонено. Сейчас добавляем только лёгкий venue-реестр поверх существующего каталога
 
 **Чеклист:**
-- [ ] Реестр [src/app/venues.ts](src/app/venues.ts): 7 venues × 3 персоны
-- [ ] Опциональный `venueId: string` на `ScenarioDefinition`; проставить для всех 8 сценариев
-- [ ] [src/app/components/scenario-launcher.tsx](src/app/components/scenario-launcher.tsx) — модальный компонент
-- [ ] Trigger в ControlRail + монтирование в `LeaderDashboard`
-- [ ] Инвариант: `venueId` каждого сценария существует в registry
-- [ ] Unit-тесты: рендер открытого/закрытого состояния, фильтры, клик → navigate
+- [x] Реестр [src/app/venues.ts](src/app/venues.ts): 7 venues × 3 персоны
+- [x] Опциональный `venueId: string` на `ScenarioDefinition`; проставить для всех 8 сценариев
+- [x] [src/app/components/scenario-launcher.tsx](src/app/components/scenario-launcher.tsx) — модальный компонент с двумя шагами (фильтры → результаты)
+- [x] Trigger в ControlRail + монтирование в `LeaderDashboard`
+- [x] Инвариант: `venueId` каждого сценария существует в registry
+- [x] Unit-тесты: рендер открытого/закрытого состояния, фильтры, клик → navigate
+- [x] Подсветка только ненулевых чипов (persona и risk) через `data-empty`
+- [x] Кнопки действий переименованы в «Открыть» (оператор) и «На видеостену» (display в новой вкладке)
+- [x] Убраны табы сценариев из ControlRail — навигация только через каталог
+- [x] Бейдж «Видеостена · только показ» в ScenarioHeader при `interactive=false`
+- [x] Справочные кнопки «i» в углу секций (Обстановка, Действия руководителя) с привязкой к регламенту в [src/app/references.ts](src/app/references.ts)
 
 ### 4.c — Interactive step metadata (фундамент тренажёра)
 
@@ -153,6 +158,7 @@ interface ScenarioStepInteractiveMeta {
 - **Рандомизатор сценариев**: `shuffleNonCriticalSignals`, `jitterTimeWindowSec`, `optionalEvents`. Event-feed показывает сигналы как ленту с элементом случайности
 - **Экспорт для ЦУКС**: CSV/XML формат, согласование с ГУ МЧС России по НСО
 - **Ролевой UI**: Operator / Leader / Trainer / Observer с предустроенной раскладкой для каждой роли (сейчас дифференцируется только operator/display)
+- **Интерактивные чек-листы с развилками**: в Phase 4.b добавлены read-only справочные блоки через `RegulationNote` в [src/app/references.ts](src/app/references.ts). В Phase 5 развиваем до чек-листов с развилками: оператор во время события отмечает «путь 1 / путь 2», и сценарий идёт по выбранной ветке с соответствующими рекомендациями. Расширяет `RegulationNote` до `ChecklistNode` с массивом выборов и привязкой к `ScenarioStep`-переходам
 
 ---
 

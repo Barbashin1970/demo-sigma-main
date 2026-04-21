@@ -1,6 +1,6 @@
 import { useState } from 'react'
 
-import type { DisplayMode, ScenarioId } from '../../scenarios'
+import type { DisplayMode } from '../../scenarios'
 import type { PlaybackStoreState } from '../../features/scenario-player/playbackStore'
 
 import {
@@ -16,14 +16,12 @@ const LeaderDashboard = ({
   state,
   interactive,
   mode,
-  onScenarioSelect,
   onStep,
   onReset,
 }: {
   state: PlaybackStoreState
   interactive: boolean
   mode: DisplayMode
-  onScenarioSelect?: (id: ScenarioId) => void
   onStep?: () => void
   onReset?: () => void
 }) => {
@@ -36,15 +34,14 @@ const LeaderDashboard = ({
         <div className="grid gap-5 xl:grid-cols-[340px_minmax(0,1fr)]">
           <ControlRail
             interactive={interactive}
-            onOpenLauncher={() => setLauncherOpen(true)}
+            onOpenLauncher={interactive ? () => setLauncherOpen(true) : undefined}
             onReset={onReset}
-            onScenarioSelect={onScenarioSelect}
             onStep={onStep}
             state={state}
           />
 
           <div className="space-y-5">
-            <ScenarioHeader state={state} />
+            <ScenarioHeader interactive={interactive} state={state} />
             <div className="grid gap-5 xl:grid-cols-[minmax(0,1.08fr)_minmax(0,0.92fr)]">
               <IncidentPanel state={state} />
               <ForecastPanel state={state} />
@@ -89,12 +86,10 @@ export const InvalidScenarioState = () => (
 
 export const OperatorDashboard = ({
   state,
-  onScenarioSelect,
   onStep,
   onReset,
 }: {
   state: PlaybackStoreState
-  onScenarioSelect: (id: ScenarioId) => void
   onStep: () => void
   onReset: () => void
 }) => (
@@ -102,7 +97,6 @@ export const OperatorDashboard = ({
     interactive
     mode="operator"
     onReset={onReset}
-    onScenarioSelect={onScenarioSelect}
     onStep={onStep}
     state={state}
   />
