@@ -12,11 +12,16 @@ import {
 import { RegulationsScreen } from './components/regulations-screen'
 import { TrainerScreen } from './components/trainer-screen'
 
+/** Сценарий по умолчанию для маршрутов без явного scenarioId. */
+const DEFAULT_SCENARIO_ID = 'thermal-incident'
+
 const SceneRoute = ({ mode }: { mode: DisplayMode }) => {
   const { scenarioId } = useParams()
   const state = usePlaybackState()
   const actions = usePlaybackActions()
-  const resolvedScenarioId = resolveScenarioId(scenarioId)
+  // Если scenarioId не задан в URL — используем сценарий по умолчанию.
+  // Так `/operator` показывает рабочий экран без редиректа на длинный URL.
+  const resolvedScenarioId = resolveScenarioId(scenarioId) ?? (scenarioId ? null : DEFAULT_SCENARIO_ID)
 
   usePlaybackSync(mode)
   useScenarioRoute(resolvedScenarioId)
@@ -46,12 +51,14 @@ export default function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route element={<Navigate replace to="/operator/hospital-fire" />} path="/" />
+        <Route element={<Navigate replace to="/operator" />} path="/" />
+        <Route element={<SceneRoute mode="operator" />} path="/operator" />
         <Route element={<SceneRoute mode="operator" />} path="/operator/:scenarioId" />
+        <Route element={<SceneRoute mode="display" />} path="/display" />
         <Route element={<SceneRoute mode="display" />} path="/display/:scenarioId" />
         <Route element={<TrainerScreen />} path="/trainer/:scenarioId" />
         <Route element={<RegulationsScreen />} path="/regulations" />
-        <Route element={<Navigate replace to="/operator/hospital-fire" />} path="*" />
+        <Route element={<Navigate replace to="/operator" />} path="*" />
       </Routes>
     </BrowserRouter>
   )

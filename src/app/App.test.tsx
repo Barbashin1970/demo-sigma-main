@@ -103,4 +103,40 @@ describe('App routes', () => {
     expect(screen.queryByText(/медицинский объект работает без отклонений, внешняя инфраструктура стабильна/i)).not.toBeInTheDocument()
   })
 
+  it('renders the default scenario at /operator (no scenarioId in URL)', () => {
+    window.history.pushState({}, '', '/operator')
+
+    render(<App />)
+
+    expect(
+      screen.getByRole('heading', {
+        name: /опасность пожара в серверной университета/i,
+      }),
+    ).toBeInTheDocument()
+    expect(screen.getAllByTestId('operator-shell').length).toBeGreaterThan(0)
+  })
+
+  it('redirects from / to /operator and renders the default scenario', () => {
+    window.history.pushState({}, '', '/')
+
+    render(<App />)
+
+    expect(
+      screen.getByRole('heading', {
+        name: /опасность пожара в серверной университета/i,
+      }),
+    ).toBeInTheDocument()
+  })
+
+  it('wraps the status banner in a sticky container so it stays visible while scrolling', () => {
+    window.history.pushState({}, '', '/operator')
+
+    render(<App />)
+
+    const sticky = screen.getAllByTestId('status-banner-sticky').at(-1)
+    expect(sticky).toBeInTheDocument()
+    expect(sticky?.className).toMatch(/sticky/)
+    expect(sticky?.className).toMatch(/top-0/)
+  })
+
 })
