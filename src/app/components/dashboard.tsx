@@ -33,16 +33,22 @@ const LeaderDashboard = ({
     <div className="relative min-h-[100dvh] overflow-x-clip bg-[#f3f0e8] text-zinc-950">
       <ShellBackground />
       <FullscreenButton />
-      <div className="relative mx-auto max-w-[1680px] px-4 py-5 md:px-6 lg:px-8" data-testid="operator-shell">
-        <div className="space-y-5">
-          <div className="sticky top-0 z-20 -mx-4 px-4 pt-1 pb-3 bg-[#f3f0e8]/95 backdrop-blur-md md:-mx-6 md:px-6 lg:-mx-8 lg:px-8" data-testid="status-banner-sticky">
-            <ScenarioHeader interactive={interactive} state={state} />
-          </div>
-          <div className="grid gap-5 xl:grid-cols-[280px_minmax(0,1.1fr)_minmax(0,1fr)]">
-            <ControlRail state={state} />
-            <IncidentPanel state={state} />
-            <ForecastPanel state={state} />
-          </div>
+      <div
+        className="sticky top-0 z-20 bg-[#f3f0e8]/95 backdrop-blur-md shadow-[0_8px_24px_-16px_rgba(15,23,42,0.22)]"
+        data-testid="status-banner-sticky"
+      >
+        <div className="mx-auto max-w-[1680px] px-4 py-4 md:px-6 lg:px-8">
+          <ScenarioHeader interactive={interactive} state={state} />
+        </div>
+      </div>
+      <div
+        className="relative mx-auto max-w-[1680px] px-4 pb-5 md:px-6 lg:px-8"
+        data-testid="operator-shell"
+      >
+        <div className="mt-5 grid gap-5 xl:grid-cols-[280px_minmax(0,1.1fr)_minmax(0,1fr)]">
+          <ControlRail state={state} />
+          <IncidentPanel state={state} />
+          <ForecastPanel state={state} />
         </div>
         <SigmaAssist
           interactive={interactive}
